@@ -7,6 +7,8 @@ class BaseModel:
         self.__before_init__(*args, **kwargs)
         for attr_name, model_attr in self._get_model_attrs().items():
             if not model_attr.initable:
+                if attr_name in kwargs:
+                    raise NameError(f'{attr_name} attribute is not initable for class {self.__class__.__name__}')
                 continue
             exposed_attr_name = self._get_exposed_attr_name(attr_name)
             attr_value = kwargs.get(exposed_attr_name, model_attr.default_factory())

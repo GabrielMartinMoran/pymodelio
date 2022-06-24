@@ -117,8 +117,48 @@ computer = Computer.from_dict({
 })
 ```
 
+### Customizing the models initialization workflow
+```py
+@pymodelio_model
+class Model:
+    model_attr: Attribute[str]
+
+    @classmethod
+    def __before_init__(cls, *args, **kwargs) -> None:
+        # This method is called before everything when the model constructor is called
+        # It receives the same parameters the constructor gets
+        pass
+
+    @classmethod
+    def __before_validate__(cls) -> None:
+        # This method is called after initializing the model attributes but just before
+        # performing the model validations (it will be executed even if 
+        # auto_validate = False)
+        pass
+
+    @classmethod
+    def __once_validated__(cls) -> None:
+        # This method is called just after performing the model validations initializing
+        # the model attributes but before performing the model validations (it will be
+        # executed even if auto_validate = False)
+        pass
+```
+
+### Not initable attributes
+```py
+@pymodelio_model
+class Model:
+    non_initable_model_attr: Attribute[str](initable=False, default_factory=lambda: 'Non initable default value')
+
+# WARNING: This will raise a NameError('non_initable_model_attr attribute is not
+#          initable for class Model')
+Model(non_initable_model_attr='custom value') 
+
+
+```
+
 ## Considerations
-When a class attribute has the annotation `Attribute[\<type\>]`, it will be transformed into an instance attribute during the model initialization.
+When a class attribute has the annotation `Attribute[<type>]`, it will be transformed into an instance attribute during the model initialization.
 
 
 When defining a protected or private model attribute with underscore or double underscore respectively, if that property can be set by the model constructor, it's value will be obtained from an attribute with the same name but without underscores. For instance:
