@@ -2,7 +2,6 @@ import re
 import math
 from typing import Any
 
-from src.exceptions.model_validation_exception import ModelValidationException
 from src.validators.validator import Validator
 
 

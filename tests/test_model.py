@@ -1,7 +1,7 @@
 import pytest
 
 from src.exceptions.model_validation_exception import ModelValidationException
-from test.test_models.computer import Computer
+from tests.test_models.computer import Computer
 
 
 def test_valid_model_hierarchy():

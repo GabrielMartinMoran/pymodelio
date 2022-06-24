@@ -1,11 +1,8 @@
-import datetime
-
 import pytest
 
 from src.attribute import Attribute
 from src.exceptions.model_validation_exception import ModelValidationException
 from src.model import pymodelio_model
-from src.validators.datetime_validator import DatetimeValidator
 from src.validators.nested_model_validator import NestedModelValidator
 
 
@@ -37,4 +34,4 @@ def test_validate_does_not_raise_error_when_provided_value_is_valid():
         name: Attribute[str]()
 
     validator = NestedModelValidator()
-    validator.validate(ModelClass(name='test'), 'path')
+    validator.validate(ModelClass(name='tests'), 'path')

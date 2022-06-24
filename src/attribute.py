@@ -1,6 +1,5 @@
-from typing import Generic, Callable, Optional, Any, Type, TypeVar, Iterable
+from typing import Generic, Callable, Optional, Any, Type, TypeVar
 
-from src.exceptions.model_validation_exception import ModelValidationException
 from src.validators.validator import Validator
 
 T = TypeVar('T')

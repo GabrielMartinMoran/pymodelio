@@ -1,0 +1,13 @@
+[run]
+omit=
+    tests/*
+    env/*
+    venv/*
+    */__init__.py
+    .coverage
+    .coveragerc
+    .gitignore
+
+[report]
+show_missing=True
+fail_under=0

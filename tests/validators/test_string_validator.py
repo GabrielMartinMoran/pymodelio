@@ -73,10 +73,10 @@ def test_validate_does_not_raise_error_when_provided_value_is_valid_and_length_i
 def test_validate_raises_validation_error_when_provided_value_does_not_match_regex():
     validator = StringValidator(regex=validation_patterns.EMAIL_VALIDATION_PATTERN)
     with pytest.raises(ModelValidationException) as ex_info:
-        validator.validate('test text', 'prop')
+        validator.validate('tests text', 'prop')
     assert ex_info.value.args[0] == 'prop does not match configured regex'
 
 
 def test_validate_does_not_raise_error_when_property_is_valid_and_value_matches_regex():
     validator = StringValidator(regex=validation_patterns.EMAIL_VALIDATION_PATTERN)
-    validator.validate('test@test.com', 'prop')
+    validator.validate('tests@tests.com', 'prop')
