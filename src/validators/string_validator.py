@@ -19,7 +19,7 @@ class StringValidator(Validator):
         super().validate(value, path)
         if value is None:
             return
-        if not isinstance(value, self.str):
+        if not isinstance(value, str):
             self.raise_validation_error(path, 'is not a valid str')
         if len(value) < self.min_len:
             self.raise_validation_error(path, f'is shorter than {self.min_len}')

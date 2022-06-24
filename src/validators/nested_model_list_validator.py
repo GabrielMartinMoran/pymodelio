@@ -14,5 +14,5 @@ class NestedModelListValidator(Validator):
         for i, x in enumerate(value):
             subpath = f'{path}[{i}]'
             if not hasattr(x, 'validate'):
-                NotImplementedError(f'{x}[{i}] model does not implement validate method')
+                raise NotImplementedError(f'{x}[{i}] model does not implement validate method')
             x.validate(subpath)

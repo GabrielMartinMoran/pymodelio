@@ -31,7 +31,8 @@ class BaseModel:
 
     def _get_model_attrs(self) -> dict:
         validated_attrs = {}
-        for k, v in self.__annotations__.items():
+        annotations = self.__annotations__ if hasattr(self, '__annotations__') else {}
+        for k, v in annotations.items():
             if isinstance(v, Attribute):
                 validated_attrs[k] = v
             # If Validated is a type and not an instance, it instantiates it using default values default

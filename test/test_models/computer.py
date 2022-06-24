@@ -6,7 +6,6 @@ from src.model import pymodelio_model, UNDEFINED
 from src.validators.int_validator import IntValidator
 from src.validators.nested_model_list_validator import NestedModelListValidator
 from src.validators.nested_model_validator import NestedModelValidator
-from src.validators.string_validator import StringValidator
 
 
 @pymodelio_model

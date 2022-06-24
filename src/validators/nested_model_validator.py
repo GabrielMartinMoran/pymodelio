@@ -10,5 +10,5 @@ class NestedModelValidator(Validator):
         if value is None:
             return
         if not hasattr(value, 'validate'):
-            NotImplementedError(f'{value} model does not implement validate method')
+            raise NotImplementedError(f'{value.__class__.__name__} model does not implement validate method')
         value.validate(path)
