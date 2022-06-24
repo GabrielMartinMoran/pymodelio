@@ -1,4 +1,5 @@
 import math
+from numbers import Number
 from typing import Any
 
 from src.validators.validator import Validator
@@ -6,7 +7,8 @@ from src.validators.validator import Validator
 
 class NumericValidator(Validator):
 
-    def __init__(self, expected_type, min_value=-math.inf, max_value=math.inf, **kwargs) -> None:
+    def __init__(self, expected_type: type, min_value: Number = -math.inf, max_value: Number = math.inf,
+                 **kwargs) -> None:
         super().__init__(**kwargs)
         self.min_value = min_value
         self.max_value = max_value

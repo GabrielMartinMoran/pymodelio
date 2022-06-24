@@ -7,7 +7,8 @@ from src.validators.validator import Validator
 
 class StringValidator(Validator):
 
-    def __init__(self, min_len=0, max_len=math.inf, fixed_len=None, regex=None, **kwargs) -> None:
+    def __init__(self, min_len: int = 0, max_len: int = math.inf, fixed_len: int = None, regex: str = None,
+                 **kwargs) -> None:
         super().__init__(**kwargs)
         self.min_len = min_len
         self.max_len = max_len
