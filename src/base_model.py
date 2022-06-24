@@ -1,25 +1,41 @@
-from src.validated import Validated
+from src.attribute import Attribute
 
 
 class BaseModel:
 
-    def __init__(self, **kwargs) -> None:
-        print(self.__annotations__)
-        for attr_name, validator in self._get_validated_attrs().items():
-            if not validator.initable:
+    def __init__(self, *args, **kwargs) -> None:
+        self.__before_init__(*args, **kwargs)
+        for attr_name, model_attr in self._get_model_attrs().items():
+            if not model_attr.initable:
                 continue
             exposed_attr_name = self._get_exposed_attr_name(attr_name)
-            attr_value = kwargs.get(exposed_attr_name, validator.default_factory())
+            attr_value = kwargs.get(exposed_attr_name, model_attr.default_factory())
             setattr(self, attr_name, attr_value)
-        self.validate(True)
+        self.__before_validate__()
+        auto_validate = kwargs.get('auto_validate', True)
+        if auto_validate:
+            self.validate()
+        self.__once_validated__()
 
-    def _get_validated_attrs(self) -> dict:
+    @classmethod
+    def __before_init__(cls, *args, **kwargs) -> None:
+        pass
+
+    @classmethod
+    def __before_validate__(cls) -> None:
+        pass
+
+    @classmethod
+    def __once_validated__(cls) -> None:
+        pass
+
+    def _get_model_attrs(self) -> dict:
         validated_attrs = {}
         for k, v in self.__annotations__.items():
-            if isinstance(v, Validated):
+            if isinstance(v, Attribute):
                 validated_attrs[k] = v
             # If Validated is a type and not an instance, it instantiates it using default values default
-            elif v.__origin__ == Validated:
+            elif v.__origin__ == Attribute:
                 validated_attrs[k] = v()
         return validated_attrs
 
@@ -40,12 +56,10 @@ class BaseModel:
         # Public attributes
         return attr_name
 
-    def validate(self, check_auto_validate: bool = False, path: str = None) -> None:
+    def validate(self, path: str = None) -> None:
         """
         It must raise ModelValidationException in case of an invalid attribute
         """
-        for attr_name, validator in self._get_validated_attrs().items():
-            if check_auto_validate and not validator.auto_validate:
-                continue
+        for attr_name, validator in self._get_model_attrs().items():
             attr_value = getattr(self, attr_name)
             validator.validate(attr_value, path=f'{path or self.__class__.__name__}.{attr_name}')
