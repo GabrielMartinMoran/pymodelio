@@ -9,7 +9,7 @@ class StringValidator(Validator):
 
     def __init__(self, min_len: int = 0, max_len: int = math.inf, fixed_len: int = None, regex: str = None,
                  **kwargs) -> None:
-        super().__init__(**kwargs)
+        super().__init__(expected_type=str, **kwargs)
         self.min_len = min_len
         self.max_len = max_len
         self.fixed_len = fixed_len
@@ -19,8 +19,6 @@ class StringValidator(Validator):
         super().validate(value, path)
         if value is None:
             return
-        if not isinstance(value, str):
-            self.raise_validation_error(path, 'is not a valid str')
         if len(value) < self.min_len:
             self.raise_validation_error(path, f'is shorter than {self.min_len}')
         if len(value) > self.max_len:

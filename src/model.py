@@ -1,7 +1,5 @@
 from src.base_model import BaseModel
 
-UNDEFINED = object()
-
 
 def pymodelio_model(cls: type) -> type:
     """

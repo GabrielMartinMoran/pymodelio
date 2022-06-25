@@ -1,6 +1,7 @@
 import pytest
 
 from src.attribute import Attribute
+from src.constants import UNDEFINED
 from src.exceptions.model_validation_exception import ModelValidationException
 from src.model import pymodelio_model
 from tests.test_models.computer import Computer
@@ -105,3 +106,12 @@ def test_can_not_init_non_initable_model_attributes():
     with pytest.raises(NameError) as ex_info:
         Model(non_initable_model_attr='custom value')
     assert ex_info.value.args[0] == 'non_initable_model_attr attribute is not initable for class Model'
+
+
+def test_model_init_uses_default_factory_value_when_provided_value_is_UNDEFINED():
+    @pymodelio_model
+    class Model:
+        model_attr: Attribute[int](default_factory=lambda: 12345)
+
+    model = Model(model_attr=UNDEFINED)
+    assert model.model_attr == 12345

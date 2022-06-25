@@ -1,4 +1,5 @@
 from src.attribute import Attribute
+from src.constants import UNDEFINED
 
 
 class BaseModel:
@@ -12,6 +13,8 @@ class BaseModel:
                 continue
             exposed_attr_name = self._get_exposed_attr_name(attr_name)
             attr_value = kwargs.get(exposed_attr_name, model_attr.default_factory())
+            if attr_value == UNDEFINED:
+                attr_value = model_attr.default_factory()
             setattr(self, attr_name, attr_value)
         self.__before_validate__()
         auto_validate = kwargs.get('auto_validate', True)

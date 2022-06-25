@@ -2,10 +2,11 @@ import uuid
 from typing import List
 
 from src.attribute import Attribute
-from src.model import pymodelio_model, UNDEFINED
+from src.constants import UNDEFINED
+from src.model import pymodelio_model
 from src.validators.int_validator import IntValidator
-from src.validators.nested_model_list_validator import NestedModelListValidator
-from src.validators.nested_model_validator import NestedModelValidator
+from src.validators.list_validator import ListValidator
+from src.validators.validator import Validator
 
 
 @pymodelio_model
@@ -55,9 +56,9 @@ class Disk(Component):
 
 @pymodelio_model
 class Computer(Component):
-    _cpu: Attribute[CPU](validator=NestedModelValidator())
-    _rams: Attribute[List[RAM]](validator=NestedModelListValidator())
-    _disks: Attribute[List[Disk]](validator=NestedModelListValidator())
+    _cpu: Attribute[CPU](validator=Validator(expected_type=CPU))
+    _rams: Attribute[List[RAM]](validator=ListValidator(elements_type=RAM))
+    _disks: Attribute[List[Disk]](validator=ListValidator(elements_type=Disk))
 
     @property
     def serial_no(self) -> str:
