@@ -229,7 +229,7 @@ A validator for list of any type that allows nested models. Validated list eleme
 ListValidator(elements_type: Union[type, List[type]], nullable: bool = False, message: str = None)
 ```
 
-## Let's compare the same code using raw python aginst using pymodelio
+## Let's compare the same code using raw python against using pymodelio
 
 
 ### Using raw python
