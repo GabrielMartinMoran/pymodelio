@@ -65,7 +65,7 @@ def test_invalid_submodel_as_child():
     }
     with pytest.raises(ModelValidationException) as ex_info:
         Computer.from_dict(data)
-    assert ex_info.value.args[0] == 'Computer._cpu.frequency is not a valid int'
+    assert ex_info.value.args[0] == 'Computer.cpu.frequency is not a valid int'
 
 
 def test_invalid_submodel_in_list_as_child():
@@ -96,7 +96,7 @@ def test_invalid_submodel_in_list_as_child():
     }
     with pytest.raises(ModelValidationException) as ex_info:
         Computer.from_dict(data)
-    assert ex_info.value.args[0] == 'Computer._disks[1].size is not a valid int'
+    assert ex_info.value.args[0] == 'Computer.disks[1].size is not a valid int'
 
 
 def test_can_not_init_non_initable_model_attributes():

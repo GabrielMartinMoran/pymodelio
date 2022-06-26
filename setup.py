@@ -1,13 +1,12 @@
 from setuptools import setup, find_packages
-
-VERSION = '0.0.4'
+from pymodelio import __version__
 
 with open('README.md', 'r') as f:
     long_description = f.read()
 
 setup(
     name='pymodelio',
-    version=VERSION,
+    version=__version__,
     author='Gabriel Martín Moran',
     author_email='moran.gabriel.95@gmail.com',
     description='A simple Python module for performing model validations',

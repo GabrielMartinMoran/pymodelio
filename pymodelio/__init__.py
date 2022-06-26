@@ -1,4 +1,7 @@
 # flake8: noqa
+
+__version__ = '0.0.5'
+
 # constants
 from .constants import UNDEFINED
 

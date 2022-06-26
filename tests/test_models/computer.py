@@ -20,8 +20,12 @@ class Component:
 
 @pymodelio_model
 class CPU(Component):
-    frequency: Attribute[int](validator=IntValidator())
+    _frequency: Attribute[int](validator=IntValidator())
     cores: Attribute[int](validator=IntValidator())
+
+    @property
+    def frequency(self) -> int:
+        return self._frequency
 
     @staticmethod
     def from_dict(data: dict, auto_validate: bool = True) -> 'CPU':
