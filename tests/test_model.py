@@ -34,6 +34,7 @@ def test_valid_model_hierarchy():
         ]
     }
     computer = Computer.from_dict(data)
+    assert computer.serial_no == data['serial_no']
 
 
 def test_invalid_submodel_as_child():
@@ -115,3 +116,25 @@ def test_model_init_uses_default_factory_value_when_provided_value_is_UNDEFINED(
 
     model = Model(model_attr=UNDEFINED)
     assert model.model_attr == 12345
+
+
+def test_model_initialization_sets_private_attribute():
+    @pymodelio_model
+    class Model:
+        __private_attr_1: Attribute[int]
+
+        @property
+        def private_attr_1(self) -> int:
+            return self.__private_attr_1
+
+    @pymodelio_model
+    class ChildModel(Model):
+        __private_attr_2: Attribute[str]
+
+        @property
+        def private_attr_2(self) -> int:
+            return self.__private_attr_2
+
+    model = ChildModel(private_attr_1=12345, private_attr_2='asd')
+    assert model.private_attr_1 == 12345
+    assert model.private_attr_2 == 'asd'

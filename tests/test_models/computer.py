@@ -13,6 +13,10 @@ from pymodelio.validators.validator import Validator
 class Component:
     __serial_no: Attribute[str](default_factory=lambda: uuid.uuid4().__str__())
 
+    @property
+    def serial_no(self) -> str:
+        return self.__serial_no
+
 
 @pymodelio_model
 class CPU(Component):
@@ -59,10 +63,6 @@ class Computer(Component):
     _cpu: Attribute[CPU](validator=Validator(expected_type=CPU))
     _rams: Attribute[List[RAM]](validator=ListValidator(elements_type=RAM))
     _disks: Attribute[List[Disk]](validator=ListValidator(elements_type=Disk))
-
-    @property
-    def serial_no(self) -> str:
-        return self.__serial_no
 
     @property
     def cpu(self) -> CPU:

@@ -1,3 +1,5 @@
+from typing import List
+
 from pymodelio.attribute import Attribute
 from pymodelio.constants import UNDEFINED
 
@@ -34,9 +36,16 @@ class BaseModel:
     def __once_validated__(cls) -> None:
         pass
 
+    def _get_annotations(self) -> dict:
+        annotations = self.__annotations__ if hasattr(self, '__annotations__') else {}
+        for parent in self.__class__.__bases__:
+            if hasattr(parent, '__annotations__'):
+                annotations = {**annotations, **parent.__annotations__}
+        return annotations
+
     def _get_model_attrs(self) -> dict:
         validated_attrs = {}
-        annotations = self.__annotations__ if hasattr(self, '__annotations__') else {}
+        annotations = self._get_annotations()
         for k, v in annotations.items():
             if isinstance(v, Attribute):
                 validated_attrs[k] = v
@@ -45,15 +54,27 @@ class BaseModel:
                 validated_attrs[k] = v()
         return validated_attrs
 
-    @classmethod
-    def _get_exposed_attr_name(cls, attr_name: str) -> str:
-        # Protected attributes
-        if attr_name.startswith('__'):
-            exposed_attr_name = attr_name[2:]
-            if exposed_attr_name.endswith('__'):
-                exposed_attr_name = exposed_attr_name[:2]
-            return exposed_attr_name
+    def _generate_private_attr_prefix(self, cls: type) -> str:
+        return f'_{cls.__name__}__'
+
+    def _get_parent_private_attr_prefixes(self) -> List[str]:
+        # Iterate all the parents
+        prefixes = []
+        for cls in self.__class__.__bases__:
+            prefixes.append(self._generate_private_attr_prefix(cls))
+        return prefixes
+
+    def _get_exposed_attr_name(self, attr_name: str) -> str:
         # Private attributes
+        private_attr_prefixes = [self._generate_private_attr_prefix(
+            self.__class__)] + self._get_parent_private_attr_prefixes()
+        for private_attr_prefix in private_attr_prefixes:
+            if attr_name.startswith(private_attr_prefix):
+                exposed_attr_name = attr_name[len(private_attr_prefix):]
+                if exposed_attr_name.endswith('__'):
+                    exposed_attr_name = exposed_attr_name[:2]
+                return exposed_attr_name
+        # Protected attributes
         if attr_name.startswith('_'):
             exposed_attr_name = attr_name[1:]
             if exposed_attr_name.endswith('_'):

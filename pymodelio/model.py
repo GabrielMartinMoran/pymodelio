@@ -22,4 +22,8 @@ def pymodelio_model(cls: type) -> type:
     cls.validate = BaseModel.validate
     cls._get_model_attrs = BaseModel._get_model_attrs
     cls._get_exposed_attr_name = BaseModel._get_exposed_attr_name
+    cls._generate_private_attr_prefix = BaseModel._generate_private_attr_prefix
+    cls._get_parent_private_attr_prefixes = BaseModel._get_parent_private_attr_prefixes
+    cls._get_annotations = BaseModel._get_annotations
+
     return cls

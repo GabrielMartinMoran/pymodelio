@@ -2,6 +2,7 @@
 [![codecov](https://codecov.io/gh/GabrielMartinMoran/pymodelio/branch/main/graph/badge.svg?token=VVKW3GDMLD)](https://codecov.io/gh/GabrielMartinMoran/pymodelio)
 
 # pymodelio
+
 A simple Python module for performing model validations
 
 ## How to use the module
@@ -12,6 +13,10 @@ A simple Python module for performing model validations
 @pymodelio_model
 class Component:
     __serial_no: Attribute[str](default_factory=lambda: uuid.uuid4().__str__())
+
+    @property
+    def serial_no(self) -> str:
+        return self.__serial_no
 
 
 @pymodelio_model
@@ -61,10 +66,6 @@ class Computer(Component):
     _disks: Attribute[List[Disk]](validator=ListValidator(elements_type=Disk))
 
     @property
-    def serial_no(self) -> str:
-        return self.__serial_no
-
-    @property
     def cpu(self) -> CPU:
         return self._cpu
 
@@ -88,6 +89,7 @@ class Computer(Component):
 ```
 
 ### Using this specific models
+
 ```py
 computer = Computer.from_dict({
     'serial_no': '123e4567-e89b-12d3-a456-426614174000',
@@ -117,6 +119,7 @@ computer = Computer.from_dict({
 ```
 
 ### Customizing the models initialization workflow
+
 ```py
 @pymodelio_model
 class Model:
@@ -144,23 +147,29 @@ class Model:
 ```
 
 ### Not initable attributes
+
 ```py
 @pymodelio_model
 class Model:
     non_initable_model_attr: Attribute[str](initable=False, default_factory=lambda: 'Non initable default value')
 
+
 # WARNING: This will raise a NameError('non_initable_model_attr attribute is not
 #          initable for class Model')
-Model(non_initable_model_attr='custom value') 
+Model(non_initable_model_attr='custom value')
 
 
 ```
 
 ## Considerations
-When a class attribute has the annotation `Attribute[<type>]`, it will be transformed into an instance attribute during the model initialization.
 
+When a class attribute has the annotation `Attribute[<type>]`, it will be transformed into an instance attribute during
+the model initialization.
 
-When defining a protected or private model attribute with underscore or double underscore respectively, if that property can be set by the model constructor, it's value will be obtained from an attribute with the same name but without underscores. For instance:
+When defining a protected or private model attribute with underscore or double underscore respectively, if that property
+can be set by the model constructor, it's value will be obtained from an attribute with the same name but without
+underscores. For instance:
+
 ```py
 @pymodelio_model
 class Component:
@@ -178,59 +187,74 @@ class Component:
 
 component = Component(serial_no='123e4567-e89b-12d3-a456-426614174000', model_name='ABC123')
 
-print(component.serial_no) # It will print '123e4567-e89b-12d3-a456-426614174000'
-print(component.model_name) # It will print 'ABC123'
+print(component.serial_no)  # It will print '123e4567-e89b-12d3-a456-426614174000'
+print(component.model_name)  # It will print 'ABC123'
 ```
 
 ## Available validators
 
 ### Validator
-A generic validator for any type passed by parameter. It is also capable of validating other models. Validated value must implement `validate` method in order to be considered a model by this validator.
+
+A generic validator for any type passed by parameter. It is also capable of validating other models. Validated value
+must implement `validate` method in order to be considered a model by this validator.
 Other validators inherit from this one.
+
 ```py
 Validator(expected_type: Union[type, List[type]] = None, nullable: bool = False, message: str = None)
 ```
 
 ### StringValidator
+
 ```py
-StringValidator(min_len: int = 0, max_len: int = math.inf, fixed_len: int = None, regex: str = None, nullable: bool = False, message: str = None)
+StringValidator(
+    min_len: int = 0, max_len: int = math.inf, fixed_len: int = None, regex: str = None, nullable: bool = False, message: str = None)
 ```
 
 ### NumericValidator
+
 ```py
-NumericValidator(expected_type: type, min_value: Number = -math.inf, max_value: Number = math.inf, nullable: bool = False, message: str = None)
+NumericValidator(
+    expected_type: type, min_value: Number = -math.inf, max_value: Number = math.inf, nullable: bool = False, message: str = None)
 ```
 
 ### IntValidator
+
 A subclass of NumericValidator specific for integers.
+
 ```py
 IntValidator(min_value: Number = -math.inf, max_value: Number = math.inf, nullable: bool = False, message: str = None)
 ```
 
 ### FloatValidator
+
 A subclass of NumericValidator specific for float numbers.
+
 ```py
 FloatValidator(min_value: Number = -math.inf, max_value: Number = math.inf, nullable: bool = False, message: str = None)
 ```
 
 ### DatetimeValidator
+
 ```py
 DatetimeValidator(nullable: bool = False, message: str = None)
 ```
 
 ### DictValidator
+
 ```py
 DictValidator(nullable: bool = False, message: str = None)
 ```
 
 ### ListValidator
-A validator for list of any type that allows nested models. Validated list elements must implement `validate` method in order to be considered a model by this validator.
+
+A validator for list of any type that allows nested models. Validated list elements must implement `validate` method in
+order to be considered a model by this validator.
+
 ```py
 ListValidator(elements_type: Union[type, List[type]], nullable: bool = False, message: str = None)
 ```
 
 ## Let's compare the same code using raw python against using pymodelio
-
 
 ### Using raw python
 
@@ -266,18 +290,18 @@ class RawPythonModel:
 
     def validate(self) -> None:
         assert isinstance(self.public_attr, int), 'public_child_attr is not a valid int'
-        assert self.public_attr >= self._PUBLIC_ATTR_MIN_VALUE, \
+        assert self.public_attr >= self._PUBLIC_ATTR_MIN_VALUE,
             f'public_child_attr is lower than {self._PUBLIC_ATTR_MIN_VALUE}'
-        assert self.public_attr <= self._PUBLIC_ATTR_MAX_VALUE, \
+        assert self.public_attr <= self._PUBLIC_ATTR_MAX_VALUE,
             f'public_child_attr is greater than {self._PUBLIC_ATTR_MAX_VALUE}'
 
         assert isinstance(self._protected_attr, str), '_protected_attr is not a valid str'
-        assert len(self._protected_attr) == self._PROTECTED_ATTR_FIXED_LENGTH, \
+        assert len(self._protected_attr) == self._PROTECTED_ATTR_FIXED_LENGTH,
             f'_protected_attr length is different than {self._PROTECTED_ATTR_FIXED_LENGTH}'
-        assert re.compile(self._PROTECTED_ATTR_REGEX).match(self._protected_attr) is not None, \
+        assert re.compile(self._PROTECTED_ATTR_REGEX).match(self._protected_attr) is not None,
             '_protected_attr does not match configured regex'
 
-        assert isinstance(self.child_model_attr, RawPythonChildModel), \
+        assert isinstance(self.child_model_attr, RawPythonChildModel),
             'child_model_attr is not a valid RawPythonChildModel'
         self.child_model_attr.validate()
 
@@ -292,7 +316,8 @@ class RawPythonModel:
 
 ### Using pymodelio
 
-pymodelio model validation errors also give more information about the full path of nested structures. In case of lists, including the index of the list element where the error occurred.
+pymodelio model validation errors also give more information about the full path of nested structures. In case of lists,
+including the index of the list element where the error occurred.
 
 ```py
 @pymodelio_model
