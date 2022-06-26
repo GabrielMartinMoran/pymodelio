@@ -1,9 +1,9 @@
 import pytest
 
-from src.attribute import Attribute
-from src.exceptions.model_validation_exception import ModelValidationException
-from src.model import pymodelio_model
-from src.validators.validator import Validator
+from pymodelio.attribute import Attribute
+from pymodelio.exceptions.model_validation_exception import ModelValidationException
+from pymodelio.model import pymodelio_model
+from pymodelio.validators.validator import Validator
 
 
 def test_validate_does_not_raise_error_when_provided_value_is_not_none():

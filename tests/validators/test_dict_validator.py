@@ -1,7 +1,7 @@
 import pytest
 
-from src.exceptions.model_validation_exception import ModelValidationException
-from src.validators.dict_validator import DictValidator
+from pymodelio.exceptions.model_validation_exception import ModelValidationException
+from pymodelio.validators.dict_validator import DictValidator
 
 
 def test_validate_raises_validation_error_when_provided_value_is_not_instance_of_dict():

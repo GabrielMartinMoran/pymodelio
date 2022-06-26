@@ -1,12 +1,12 @@
 import uuid
 from typing import List
 
-from src.attribute import Attribute
-from src.constants import UNDEFINED
-from src.model import pymodelio_model
-from src.validators.int_validator import IntValidator
-from src.validators.list_validator import ListValidator
-from src.validators.validator import Validator
+from pymodelio.attribute import Attribute
+from pymodelio.constants import UNDEFINED
+from pymodelio.model import pymodelio_model
+from pymodelio.validators.int_validator import IntValidator
+from pymodelio.validators.list_validator import ListValidator
+from pymodelio.validators.validator import Validator
 
 
 @pymodelio_model

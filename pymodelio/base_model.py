@@ -1,5 +1,5 @@
-from src.attribute import Attribute
-from src.constants import UNDEFINED
+from pymodelio.attribute import Attribute
+from pymodelio.constants import UNDEFINED
 
 
 class BaseModel:

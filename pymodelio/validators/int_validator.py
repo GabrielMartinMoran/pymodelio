@@ -1,4 +1,4 @@
-from src.validators.numeric_validator import NumericValidator
+from pymodelio.validators.numeric_validator import NumericValidator
 
 
 class IntValidator(NumericValidator):

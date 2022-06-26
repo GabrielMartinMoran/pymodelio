@@ -1,6 +1,6 @@
 from typing import Any, Union, List
 
-from src.exceptions.model_validation_exception import ModelValidationException
+from pymodelio.exceptions.model_validation_exception import ModelValidationException
 
 
 class Validator:

@@ -1,7 +1,7 @@
 import pytest
 
-from src.exceptions.model_validation_exception import ModelValidationException
-from src.validators.numeric_validator import NumericValidator
+from pymodelio.exceptions.model_validation_exception import ModelValidationException
+from pymodelio.validators.numeric_validator import NumericValidator
 
 
 def test_validate_does_not_raise_error_when_provided_value_is_none_and_property_is_nullable():

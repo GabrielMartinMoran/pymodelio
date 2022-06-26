@@ -2,14 +2,14 @@ import re
 from datetime import datetime
 from typing import List
 
-from src.attribute import Attribute
-from src.model import pymodelio_model
-from src.validators.datetime_validator import DatetimeValidator
-from src.validators.dict_validator import DictValidator
-from src.validators.int_validator import IntValidator
-from src.validators.list_validator import ListValidator
-from src.validators.string_validator import StringValidator
-from src.validators.validator import Validator
+from pymodelio.attribute import Attribute
+from pymodelio.model import pymodelio_model
+from pymodelio.validators.datetime_validator import DatetimeValidator
+from pymodelio.validators import DictValidator
+from pymodelio.validators.int_validator import IntValidator
+from pymodelio.validators import ListValidator
+from pymodelio.validators.string_validator import StringValidator
+from pymodelio.validators.validator import Validator
 
 
 @pymodelio_model

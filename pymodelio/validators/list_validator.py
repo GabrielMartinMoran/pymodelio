@@ -1,6 +1,6 @@
 from typing import Any, Union, List
 
-from src.validators.validator import Validator
+from pymodelio.validators.validator import Validator
 
 
 class ListValidator(Validator):

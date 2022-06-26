@@ -2,7 +2,7 @@ import re
 import math
 from typing import Any
 
-from src.validators.validator import Validator
+from pymodelio.validators.validator import Validator
 
 
 class StringValidator(Validator):

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from src.validators.validator import Validator
+from pymodelio.validators.validator import Validator
 
 
 class DatetimeValidator(Validator):

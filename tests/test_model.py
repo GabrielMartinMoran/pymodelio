@@ -1,9 +1,9 @@
 import pytest
 
-from src.attribute import Attribute
-from src.constants import UNDEFINED
-from src.exceptions.model_validation_exception import ModelValidationException
-from src.model import pymodelio_model
+from pymodelio.attribute import Attribute
+from pymodelio.constants import UNDEFINED
+from pymodelio.exceptions.model_validation_exception import ModelValidationException
+from pymodelio.model import pymodelio_model
 from tests.test_models.computer import Computer
 
 

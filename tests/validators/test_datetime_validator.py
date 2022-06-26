@@ -2,8 +2,8 @@ import datetime
 
 import pytest
 
-from src.exceptions.model_validation_exception import ModelValidationException
-from src.validators.datetime_validator import DatetimeValidator
+from pymodelio.exceptions.model_validation_exception import ModelValidationException
+from pymodelio.validators.datetime_validator import DatetimeValidator
 
 
 def test_validate_does_not_raise_error_when_provided_value_is_none_and_property_is_nullable():

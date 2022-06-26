@@ -1,4 +1,4 @@
-from src.base_model import BaseModel
+from pymodelio.base_model import BaseModel
 
 
 def pymodelio_model(cls: type) -> type:
