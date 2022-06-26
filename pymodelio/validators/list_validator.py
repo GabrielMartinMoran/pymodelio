@@ -1,20 +1,19 @@
-from typing import Any, Union, List
+from typing import Any, Union, List, Optional
 
 from pymodelio.validators.validator import Validator
 
 
 class ListValidator(Validator):
 
-    def __init__(self, elements_type: Union[type, List[type]], **kwargs) -> None:
-        super().__init__(**kwargs)
+    def __init__(self, elements_type: Union[type, List[type]], nullable: bool = False,
+                 message: Optional[str] = None) -> None:
+        super().__init__(expected_type=list, nullable=nullable, message=message)
         self.elements_type = tuple(elements_type) if isinstance(elements_type, (list, tuple, set)) else (elements_type,)
 
     def validate(self, value: Any, path: str = None) -> None:
         super().validate(value, path)
         if value is None:
             return
-        if not isinstance(value, list):
-            self.raise_validation_error(path, 'is not a valid list')
         for i, x in enumerate(value):
             sub_path = f'{path}[{i}]'
 

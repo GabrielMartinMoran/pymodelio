@@ -10,6 +10,13 @@ A simple Python module for performing model validations
 ### Declaring the models
 
 ```py
+import uuid
+from typing import List
+
+from pymodelio import pymodelio_model, Attribute, UNDEFINED
+from pymodelio.validators import Validator, IntValidator, ListValidator
+
+
 @pymodelio_model
 class Component:
     __serial_no: Attribute[str](default_factory=lambda: uuid.uuid4().__str__())
@@ -200,21 +207,19 @@ must implement `validate` method in order to be considered a model by this valid
 Other validators inherit from this one.
 
 ```py
-Validator(expected_type: Union[type, List[type]] = None, nullable: bool = False, message: str = None)
+Validator(expected_type: Union[type, List[type]] = None, nullable: bool = False, message: Optional[str] = None)
 ```
 
 ### StringValidator
 
 ```py
-StringValidator(
-    min_len: int = 0, max_len: int = math.inf, fixed_len: int = None, regex: str = None, nullable: bool = False, message: str = None)
+StringValidator(min_len: Optional[int] = None, max_len: Optional[int] = None, fixed_len: Optional[int] = None, regex: Optional[str] = None, nullable: bool = False, message: Optional[str] = None)
 ```
 
 ### NumericValidator
 
 ```py
-NumericValidator(
-    expected_type: type, min_value: Number = -math.inf, max_value: Number = math.inf, nullable: bool = False, message: str = None)
+NumericValidator(expected_type: type, min_value: Optional[Number] = None, max_value: Optional[Number] = None, expected_type: Union[type, List[type]] = None, nullable: bool = False, message: Optional[str] = None)
 ```
 
 ### IntValidator
@@ -222,7 +227,7 @@ NumericValidator(
 A subclass of NumericValidator specific for integers.
 
 ```py
-IntValidator(min_value: Number = -math.inf, max_value: Number = math.inf, nullable: bool = False, message: str = None)
+IntValidator(min_value: Optional[int] = None, max_value: Optional[int] = None, nullable: bool = False, message: Optional[str] = None)
 ```
 
 ### FloatValidator
@@ -230,19 +235,19 @@ IntValidator(min_value: Number = -math.inf, max_value: Number = math.inf, nullab
 A subclass of NumericValidator specific for float numbers.
 
 ```py
-FloatValidator(min_value: Number = -math.inf, max_value: Number = math.inf, nullable: bool = False, message: str = None)
+FloatValidator(min_value: Optional[float] = None, max_value: Optional[float] = None, nullable: bool = False, message: Optional[str] = None)
 ```
 
 ### DatetimeValidator
 
 ```py
-DatetimeValidator(nullable: bool = False, message: str = None)
+DatetimeValidator(nullable: bool = False, message: Optional[str] = None)
 ```
 
 ### DictValidator
 
 ```py
-DictValidator(nullable: bool = False, message: str = None)
+DictValidator(nullable: bool = False, message: Optional[str] = None)
 ```
 
 ### ListValidator
@@ -251,7 +256,13 @@ A validator for list of any type that allows nested models. Validated list eleme
 order to be considered a model by this validator.
 
 ```py
-ListValidator(elements_type: Union[type, List[type]], nullable: bool = False, message: str = None)
+ListValidator(elements_type: Union[type, List[type]], nullable: bool = False, message: Optional[str] = None)
+```
+
+### EmailValidator
+
+```py
+EmailValidator(nullable: bool = False, message: Optional[str] = None)
 ```
 
 ## Let's compare the same code using raw python against using pymodelio

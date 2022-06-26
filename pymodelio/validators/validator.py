@@ -1,4 +1,4 @@
-from typing import Any, Union, List
+from typing import Any, Union, List, Optional
 
 from pymodelio.exceptions.model_validation_exception import ModelValidationException
 
@@ -6,7 +6,7 @@ from pymodelio.exceptions.model_validation_exception import ModelValidationExcep
 class Validator:
 
     def __init__(self, expected_type: Union[type, List[type]] = None, nullable: bool = False,
-                 message: str = None) -> None:
+                 message: Optional[str] = None) -> None:
         self.nullable = nullable
         self.message = message
         if expected_type is None:

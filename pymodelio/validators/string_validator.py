@@ -1,15 +1,14 @@
 import re
-import math
-from typing import Any
+from typing import Any, Optional
 
 from pymodelio.validators.validator import Validator
 
 
 class StringValidator(Validator):
 
-    def __init__(self, min_len: int = 0, max_len: int = math.inf, fixed_len: int = None, regex: str = None,
-                 **kwargs) -> None:
-        super().__init__(expected_type=str, **kwargs)
+    def __init__(self, min_len: Optional[int] = None, max_len: Optional[int] = None, fixed_len: Optional[int] = None,
+                 regex: Optional[str] = None, nullable: bool = False, message: Optional[str] = None) -> None:
+        super().__init__(expected_type=str, nullable=nullable, message=message)
         self.min_len = min_len
         self.max_len = max_len
         self.fixed_len = fixed_len
@@ -19,9 +18,9 @@ class StringValidator(Validator):
         super().validate(value, path)
         if value is None:
             return
-        if len(value) < self.min_len:
+        if self.min_len is not None and len(value) < self.min_len:
             self.raise_validation_error(path, f'is shorter than {self.min_len}')
-        if len(value) > self.max_len:
+        if self.max_len is not None and len(value) > self.max_len:
             self.raise_validation_error(path, f'is longer than {self.max_len}')
         if self.fixed_len is not None and len(value) != self.fixed_len:
             self.raise_validation_error(path, f'length is different than {self.fixed_len}')
