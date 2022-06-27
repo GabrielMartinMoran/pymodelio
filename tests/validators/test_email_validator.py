@@ -62,5 +62,6 @@ def test_validate_does_not_raise_error_when_property_is_a_valid_email_address():
         'email@example.co.jp',
         'firstname-lastname@example.com'
     ]
+    valid_email_addresses += [x.upper() for x in valid_email_addresses]
     for valid_email_address in valid_email_addresses:
         validator.validate(valid_email_address, valid_email_address)
