@@ -35,9 +35,9 @@ def test_validate_raises_validation_error_when_provided_value_is_not_a_valid_ema
         'email@-example.com',
         'email@example..com',
         'Abc..123@example.com',
-        '”(),:;<>[\]@example.com',
+        '”(),:;<>[\\]@example.com',
         'just”not”right@example.com',
-        'this\ is"really"not\allowed@example.com'
+        'this\\ is"really"not\\allowed@example.com'
     ]
     for invalid_email_address in invalid_email_addresses:
         with pytest.raises(ModelValidationException) as ex_info:

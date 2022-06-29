@@ -7,7 +7,7 @@ from pymodelio.model import pymodelio_model
 from pymodelio.validators.datetime_validator import DatetimeValidator
 from pymodelio.validators import DictValidator
 from pymodelio.validators.int_validator import IntValidator
-from pymodelio.validators import ListValidator
+from pymodelio.validators import IterableValidator
 from pymodelio.validators.string_validator import StringValidator
 from pymodelio.validators.validator import Validator
 
@@ -24,7 +24,7 @@ class PymodelioModel:
     __private_attr: Attribute[datetime](validator=DatetimeValidator())
     child_model_attr: Attribute[PymodelioChildModel](validator=Validator(expected_type=PymodelioChildModel))
     children_model_attr: Attribute[List[PymodelioChildModel]](
-        validator=ListValidator(elements_type=PymodelioChildModel))
+        validator=IterableValidator(elements_type=PymodelioChildModel))
     optional_attr: Attribute[dict](validator=DictValidator())
     non_initable_attr: Attribute[List[str]](initable=False, default_factory=list)
 

@@ -12,16 +12,9 @@ class Attribute(Generic[T]):
         self._initable = initable
         self._default_factory = default_factory or (lambda: None)
 
-    def get(self) -> T:
-        return self._attr_type
-
     def validate(self, value: Optional[Any], path: str) -> None:
         if self.validator is not None:
             self.validator.validate(value, path)
-
-    @property
-    def attr_type(self) -> Type:
-        return self.__orig_class__.__args__[0]
 
     @property
     def validator(self) -> Validator:

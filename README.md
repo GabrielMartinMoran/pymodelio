@@ -14,7 +14,7 @@ import uuid
 from typing import List
 
 from pymodelio import pymodelio_model, Attribute, UNDEFINED
-from pymodelio.validators import Validator, IntValidator, ListValidator
+from pymodelio.validators import Validator, IntValidator, IterableValidator
 
 
 @pymodelio_model
@@ -69,8 +69,8 @@ class Disk(Component):
 @pymodelio_model
 class Computer(Component):
     _cpu: Attribute[CPU](validator=Validator(expected_type=CPU))
-    _rams: Attribute[List[RAM]](validator=ListValidator(elements_type=RAM))
-    _disks: Attribute[List[Disk]](validator=ListValidator(elements_type=Disk))
+    _rams: Attribute[List[RAM]](validator=IterableValidator(elements_type=RAM))
+    _disks: Attribute[List[Disk]](validator=IterableValidator(elements_type=Disk))
 
     @property
     def cpu(self) -> CPU:
@@ -213,13 +213,16 @@ Validator(expected_type: Union[type, List[type]] = None, nullable: bool = False,
 ### StringValidator
 
 ```py
-StringValidator(min_len: Optional[int] = None, max_len: Optional[int] = None, fixed_len: Optional[int] = None, regex: Optional[str] = None, nullable: bool = False, message: Optional[str] = None)
+StringValidator(min_len: Optional[int] = None, max_len: Optional[int] = None, fixed_len: Optional[int] = None, regex:
+Optional[str] = None, nullable: bool = False, message: Optional[str] = None)
 ```
 
 ### NumericValidator
 
 ```py
-NumericValidator(expected_type: type, min_value: Optional[Number] = None, max_value: Optional[Number] = None, expected_type: Union[type, List[type]] = None, nullable: bool = False, message: Optional[str] = None)
+NumericValidator(expected_type: type, min_value: Optional[Number] = None, max_value: Optional[
+    Number] = None, expected_type: Union[type, List[type]] = None, nullable: bool = False, message: Optional[
+    str] = None)
 ```
 
 ### IntValidator
@@ -227,7 +230,8 @@ NumericValidator(expected_type: type, min_value: Optional[Number] = None, max_va
 A subclass of NumericValidator specific for integers.
 
 ```py
-IntValidator(min_value: Optional[int] = None, max_value: Optional[int] = None, nullable: bool = False, message: Optional[str] = None)
+IntValidator(min_value: Optional[int] = None, max_value: Optional[int] = None, nullable: bool = False, message:
+Optional[str] = None)
 ```
 
 ### FloatValidator
@@ -235,7 +239,8 @@ IntValidator(min_value: Optional[int] = None, max_value: Optional[int] = None, n
 A subclass of NumericValidator specific for float numbers.
 
 ```py
-FloatValidator(min_value: Optional[float] = None, max_value: Optional[float] = None, nullable: bool = False, message: Optional[str] = None)
+FloatValidator(min_value: Optional[float] = None, max_value: Optional[float] = None, nullable: bool = False, message:
+Optional[str] = None)
 ```
 
 ### DatetimeValidator
@@ -250,19 +255,35 @@ DatetimeValidator(nullable: bool = False, message: Optional[str] = None)
 DictValidator(nullable: bool = False, message: Optional[str] = None)
 ```
 
-### ListValidator
+### IterableValidator
 
-A validator for list of any type that allows nested models. Validated list elements must implement `validate` method in
+A validator for an of any type that allows nested models. Validated children must implement `validate` method in
 order to be considered a model by this validator.
 
 ```py
-ListValidator(elements_type: Union[type, List[type]], nullable: bool = False, message: Optional[str] = None)
+IterableValidator(expected_type: Union[type, List[type]] = None, elements_type: Union[
+    type, List[type]] = None, allow_empty: bool = True, nullable: bool = False, message: Optional[str] = None)
+```
+
+### ListValidator
+
+A subclass of IterableValidator specific for lists.
+
+```py
+ListValidator(elements_type: Union[type, List[type]] = None, allow_empty: bool = True, nullable: bool = False, message:
+Optional[str] = None)
 ```
 
 ### EmailValidator
 
 ```py
 EmailValidator(nullable: bool = False, message: Optional[str] = None)
+```
+
+### BoolValidator
+
+```py
+BoolValidator(nullable: bool = False, message: Optional[str] = None)
 ```
 
 ## Let's compare the same code using raw python against using pymodelio
@@ -302,27 +323,29 @@ class RawPythonModel:
     def validate(self) -> None:
         assert isinstance(self.public_attr, int), 'public_child_attr is not a valid int'
         assert self.public_attr >= self._PUBLIC_ATTR_MIN_VALUE,
-            f'public_child_attr is lower than {self._PUBLIC_ATTR_MIN_VALUE}'
-        assert self.public_attr <= self._PUBLIC_ATTR_MAX_VALUE,
-            f'public_child_attr is greater than {self._PUBLIC_ATTR_MAX_VALUE}'
+        f'public_child_attr is lower than {self._PUBLIC_ATTR_MIN_VALUE}'
 
-        assert isinstance(self._protected_attr, str), '_protected_attr is not a valid str'
-        assert len(self._protected_attr) == self._PROTECTED_ATTR_FIXED_LENGTH,
-            f'_protected_attr length is different than {self._PROTECTED_ATTR_FIXED_LENGTH}'
-        assert re.compile(self._PROTECTED_ATTR_REGEX).match(self._protected_attr) is not None,
-            '_protected_attr does not match configured regex'
+    assert self.public_attr <= self._PUBLIC_ATTR_MAX_VALUE,
+    f'public_child_attr is greater than {self._PUBLIC_ATTR_MAX_VALUE}'
 
-        assert isinstance(self.child_model_attr, RawPythonChildModel),
-            'child_model_attr is not a valid RawPythonChildModel'
-        self.child_model_attr.validate()
 
-        assert isinstance(self.children_model_attr, list), 'children_model_attr is not a valid list'
-        for child_model in self.children_model_attr:
-            child_model.validate()
+assert isinstance(self._protected_attr, str), '_protected_attr is not a valid str'
+assert len(self._protected_attr) == self._PROTECTED_ATTR_FIXED_LENGTH,
+f'_protected_attr length is different than {self._PROTECTED_ATTR_FIXED_LENGTH}'
+assert re.compile(self._PROTECTED_ATTR_REGEX).match(self._protected_attr) is not None,
+'_protected_attr does not match configured regex'
 
-        assert isinstance(self.__private_attr, datetime), '__private_attr is not a valid datetime'
+assert isinstance(self.child_model_attr, RawPythonChildModel),
+'child_model_attr is not a valid RawPythonChildModel'
+self.child_model_attr.validate()
 
-        assert isinstance(self.optional_attr, dict), 'optional_attr is not a valid dict'
+assert isinstance(self.children_model_attr, list), 'children_model_attr is not a valid list'
+for child_model in self.children_model_attr:
+    child_model.validate()
+
+assert isinstance(self.__private_attr, datetime), '__private_attr is not a valid datetime'
+
+assert isinstance(self.optional_attr, dict), 'optional_attr is not a valid dict'
 ```
 
 ### Using pymodelio

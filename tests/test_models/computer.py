@@ -5,7 +5,7 @@ from pymodelio.attribute import Attribute
 from pymodelio.constants import UNDEFINED
 from pymodelio.model import pymodelio_model
 from pymodelio.validators.int_validator import IntValidator
-from pymodelio.validators.list_validator import ListValidator
+from pymodelio.validators.iterable_validator import IterableValidator
 from pymodelio.validators.validator import Validator
 
 
@@ -65,8 +65,8 @@ class Disk(Component):
 @pymodelio_model
 class Computer(Component):
     _cpu: Attribute[CPU](validator=Validator(expected_type=CPU))
-    _rams: Attribute[List[RAM]](validator=ListValidator(elements_type=RAM))
-    _disks: Attribute[List[Disk]](validator=ListValidator(elements_type=Disk))
+    _rams: Attribute[List[RAM]](validator=IterableValidator(elements_type=RAM))
+    _disks: Attribute[List[Disk]](validator=IterableValidator(elements_type=Disk))
 
     @property
     def cpu(self) -> CPU:

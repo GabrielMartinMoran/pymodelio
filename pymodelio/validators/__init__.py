@@ -7,4 +7,4 @@ from .email_validator import EmailValidator
 from .numeric_validator import NumericValidator
 from .float_validator import FloatValidator
 from .int_validator import IntValidator
-from .list_validator import ListValidator
+from .iterable_validator import IterableValidator
