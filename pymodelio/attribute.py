@@ -1,4 +1,4 @@
-from typing import Generic, Callable, Optional, Any, Type, TypeVar
+from typing import Generic, Callable, Optional, Any, TypeVar
 
 from pymodelio.validators.validator import Validator
 
