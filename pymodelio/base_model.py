@@ -2,11 +2,13 @@ from typing import List
 
 from pymodelio.attribute import Attribute
 from pymodelio.constants import UNDEFINED
+from pymodelio.model_serializer import ModelSerializer
 
 
 class BaseModel:
 
     def __init__(self, *args, **kwargs) -> None:
+        self._is_pymodelio_model = True
         self.__before_init__(*args, **kwargs)
         for attr_name, model_attr in self._get_model_attrs().items():
             if not model_attr.initable:
@@ -91,3 +93,6 @@ class BaseModel:
             attr_value = getattr(self, attr_name)
             exposed_attr_name = self._get_exposed_attr_name(attr_name)
             validator.validate(attr_value, path=f'{path or self.__class__.__name__}.{exposed_attr_name}')
+
+    def to_dict(self) -> dict:
+        return ModelSerializer.serialize(self)

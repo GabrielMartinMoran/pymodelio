@@ -286,6 +286,45 @@ EmailValidator(nullable: bool = False, message: Optional[str] = None)
 BoolValidator(nullable: bool = False, message: Optional[str] = None)
 ```
 
+## Serialization
+
+pymodelio models implement a `to_dict()` method that serializes the public attributes and properties (defined using
+the `property` decorator). For the example at the beginning of this documentation, calling `to_dict()` method in a
+computer's instance returns something like:
+
+```py
+{
+    'cpu': {
+        'cores': 8,
+        'frequency': 3500,
+        'serial_no': '0f3b6ef1-dea3-4cdd-be53-ef85079731c4'
+    },
+    'disks': [
+        {
+            'serial_no': '011639e0-82dd-44c0-ba46-3580482c0add',
+            'size': 1024
+        },
+        {
+            'serial_no': 'd76474eb-b854-49d1-a0df-917fe8526621',
+            'size': 512
+        }
+    ],
+    'rams': [
+        {
+            'frequency': 1600,
+            'serial_no': '8a2639e0-aa0c-450a-8ee1-8dd536578bb8',
+            'size': 8
+        },
+        {
+            'frequency': 1800,
+            'serial_no': '49140714-263e-4fbb-b366-06916c4e81f5',
+            'size': 16
+        }
+    ],
+    'serial_no': 'computer-001'
+}
+```
+
 ## Let's compare the same code using raw python against using pymodelio
 
 ### Using raw python

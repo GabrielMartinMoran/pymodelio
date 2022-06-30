@@ -25,5 +25,7 @@ def pymodelio_model(cls: type) -> type:
     cls._generate_private_attr_prefix = BaseModel._generate_private_attr_prefix
     cls._get_parent_private_attr_prefixes = BaseModel._get_parent_private_attr_prefixes
     cls._get_annotations = BaseModel._get_annotations
+    # Serializer
+    cls.to_dict = BaseModel.to_dict
 
     return cls

@@ -138,3 +138,62 @@ def test_model_initialization_sets_private_attribute():
     model = ChildModel(private_attr_1=12345, private_attr_2='asd')
     assert model.private_attr_1 == 12345
     assert model.private_attr_2 == 'asd'
+
+
+def test_to_dict_serializes_public_model_attributes():
+    data = {
+        'serial_no': 'computer-001',
+        'cpu': {
+            'frequency': 3500,
+            'cores': 8
+        },
+        'rams': [
+            {
+                'frequency': 1600,
+                'size': 8
+            },
+            {
+                'frequency': 1800,
+                'size': 16
+            }
+        ],
+        'disks': [
+            {
+                'size': 1024
+            },
+            {
+                'size': 512
+            }
+        ]
+    }
+    computer = Computer.from_dict(data)
+    assert computer.to_dict() == {
+        'cpu': {
+            'cores': 8,
+            'frequency': 3500,
+            'serial_no': computer.cpu.serial_no
+        },
+        'disks': [
+            {
+                'serial_no': computer.disks[0].serial_no,
+                'size': 1024
+            },
+            {
+                'serial_no': computer.disks[1].serial_no,
+                'size': 512
+            }
+        ],
+        'rams': [
+            {
+                'frequency': 1600,
+                'serial_no': computer.rams[0].serial_no,
+                'size': 8
+            },
+            {
+                'frequency': 1800,
+                'serial_no': computer.rams[1].serial_no,
+                'size': 16
+            }
+        ],
+        'serial_no': 'computer-001'
+    }
