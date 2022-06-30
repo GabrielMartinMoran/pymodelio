@@ -3,11 +3,26 @@
 
 # pymodelio
 
-A simple Python module for performing model validations
+A simple Python module for defining domain models and performing validations against them.
+
+## What is this module for?
+Have you ever needed to validate a user input, the body of a request, re data obtained from a service like a database or an external api? Well, that's for `pymodelio` is built for, simplicity when defining your domain models and the restrictions arround them.
+
+## How to install the module
+
+Installing the module is simple as running the following script on your terminal:
+
+```shell
+pip install pymodelio
+```
 
 ## How to use the module
 
 ### Declaring the models
+
+Models can be declared using the `pymodelio_model` decorator or by inheriting from `BaseModel`. In the example below,
+the decorator way it's used for not complicating the inheritance tree, but it would be the same if instead of using the
+decorator in each model, we just declare `Component` class as `class Component(BaseModel)`.
 
 ```py
 import uuid

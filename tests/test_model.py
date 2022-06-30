@@ -2,6 +2,7 @@ from typing import Any
 
 import pytest
 
+from pymodelio import BaseModel
 from pymodelio.attribute import Attribute
 from pymodelio.constants import UNDEFINED
 from pymodelio.exceptions.model_validation_exception import ModelValidationException
@@ -215,3 +216,15 @@ def test_model_calls_when_validating_attr_method_when_performing_attribute_valid
     with pytest.raises(ModelValidationException) as ex_info:
         Model(model_attr='custom value')
     assert ex_info.value.args[0] == 'Model.model_attr does not match "Hello world"'
+
+
+def test_model_definition_using_inheritance_from_base_model():
+    class ParentModel(BaseModel):
+        parent_attr: Attribute[int]
+
+    class ChildModel(ParentModel):
+        child_attr: Attribute[str]
+
+    model = ChildModel(parent_attr=12345, child_attr='asd')
+    assert model.parent_attr == 12345
+    assert model.child_attr == 'asd'

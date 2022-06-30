@@ -9,7 +9,7 @@ setup(
     version=__version__,
     author='Gabriel Martín Moran',
     author_email='moran.gabriel.95@gmail.com',
-    description='A simple Python module for performing model validations',
+    description='A simple Python module for defining domain models and performing validations against them',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/GabrielMartinMoran/pymodelio',
