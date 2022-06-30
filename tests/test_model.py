@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 from pymodelio.attribute import Attribute
@@ -197,3 +199,19 @@ def test_to_dict_serializes_public_model_attributes():
         ],
         'serial_no': 'computer-001'
     }
+
+
+def test_model_calls_when_validating_attr_method_when_performing_attribute_validations():
+    @pymodelio_model
+    class Model:
+        model_attr: Attribute[str]
+
+        @classmethod
+        def _when_validating_attr(cls, internal_attr_name: str, exposed_attr_name: str, attr_value: Any,
+                                  attr_path: str, parent_path: str, pymodel_attribute: Attribute) -> None:
+            if exposed_attr_name == 'model_attr' and attr_value != 'Hello world':
+                raise ModelValidationException(f'{attr_path} does not match "Hello world"')
+
+    with pytest.raises(ModelValidationException) as ex_info:
+        Model(model_attr='custom value')
+    assert ex_info.value.args[0] == 'Model.model_attr does not match "Hello world"'

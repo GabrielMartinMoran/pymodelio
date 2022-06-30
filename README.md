@@ -95,7 +95,7 @@ class Computer(Component):
         )
 ```
 
-### Using this specific models
+### Using these specific models
 
 ```py
 computer = Computer.from_dict({
@@ -125,7 +125,7 @@ computer = Computer.from_dict({
 })
 ```
 
-### Customizing the models initialization workflow
+### Customizing the model's initialization workflow
 
 ```py
 @pymodelio_model
@@ -153,7 +153,7 @@ class Model:
         pass
 ```
 
-### Not initable attributes
+### Non initable attributes
 
 ```py
 @pymodelio_model
@@ -169,6 +169,9 @@ Model(non_initable_model_attr='custom value')
 ```
 
 ## Considerations
+
+When instantiating a model specifying `auto_validate = False`, the model won't be automatically validated during
+initialization.
 
 When a class attribute has the annotation `Attribute[<type>]`, it will be transformed into an instance attribute during
 the model initialization.
@@ -196,6 +199,19 @@ component = Component(serial_no='123e4567-e89b-12d3-a456-426614174000', model_na
 
 print(component.serial_no)  # It will print '123e4567-e89b-12d3-a456-426614174000'
 print(component.model_name)  # It will print 'ABC123'
+```
+
+### Customizing the validation process
+
+Custom validators can be implemented by inheriting from the `Validator` class. Even that, there is also other way of
+performing custom validations that consists on implementing `_when_validating_attr` method in the defined model. This
+method is called after the attribute validator is called (if the attribute does not have a validator, this method is
+called anyway).
+
+```py
+def _when_validating_attr(self, internal_attr_name: str, exposed_attr_name: str, attr_value: Any, attr_path: str,
+                          parent_path: str, pymodel_attribute: Attribute) -> None:
+    pass
 ```
 
 ## Available validators
@@ -323,6 +339,15 @@ computer's instance returns something like:
     ],
     'serial_no': 'computer-001'
 }
+```
+
+If a defined model implements `to_dict()` method, this overridden one will be used instead of the default
+one. The signature for overriding this method should be:
+
+```py
+def to_dict(self) -> dict:
+    return {}  # Returns the serialized model
+
 ```
 
 ## Let's compare the same code using raw python against using pymodelio

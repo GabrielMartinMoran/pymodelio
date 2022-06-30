@@ -1,4 +1,17 @@
-from pymodelio.base_model import BaseModel
+from typing import Callable
+
+base_model_overrides_child_always = []
+base_model_overrides_child_if_not_implemented = []
+
+
+def overrides_child_always(method: Callable) -> Callable:
+    base_model_overrides_child_always.append(method)
+    return method
+
+
+def overrides_child_if_not_implemented(method: Callable) -> Callable:
+    base_model_overrides_child_if_not_implemented.append(method)
+    return method
 
 
 def pymodelio_model(cls: type) -> type:
@@ -9,23 +22,18 @@ def pymodelio_model(cls: type) -> type:
     * def __before_init__(self, *args, **kwargs) -> None
     * def __before_validate__(self) -> None
     * def __once_validated__(self) -> None
+    * def _when_validating_attr(self, internal_attr_name: str, exposed_attr_name: str, attr_value: Any, attr_path: str,
+                              parent_path: str, pymodel_attribute: Attribute) -> None
+    * to_dict(self) -> dict:
 
     :param cls: Class to be transformed into a pymodelio model
     """
-    cls.__init__ = BaseModel.__init__
-    if not hasattr(cls, '__before_init__'):
-        cls.__before_init__ = BaseModel.__before_init__
-    if not hasattr(cls, '__before_validate__'):
-        cls.__before_validate__ = BaseModel.__before_validate__
-    if not hasattr(cls, '__once_validated__'):
-        cls.__once_validated__ = BaseModel.__once_validated__
-    cls.validate = BaseModel.validate
-    cls._get_model_attrs = BaseModel._get_model_attrs
-    cls._get_exposed_attr_name = BaseModel._get_exposed_attr_name
-    cls._generate_private_attr_prefix = BaseModel._generate_private_attr_prefix
-    cls._get_parent_private_attr_prefixes = BaseModel._get_parent_private_attr_prefixes
-    cls._get_annotations = BaseModel._get_annotations
-    # Serializer
-    cls.to_dict = BaseModel.to_dict
+    for method in base_model_overrides_child_always:
+        method_name = method.__name__
+        setattr(cls, method_name, method)
+    for method in base_model_overrides_child_if_not_implemented:
+        method_name = method.__name__
+        if not hasattr(cls, method_name):
+            setattr(cls, method_name, method)
 
     return cls
