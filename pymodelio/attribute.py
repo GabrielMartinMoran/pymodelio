@@ -1,4 +1,4 @@
-from typing import Generic, Callable, Optional, Any, TypeVar
+from typing import Generic, Callable, Optional, Any, TypeVar, Type
 
 from pymodelio.validators.validator import Validator
 
@@ -27,6 +27,10 @@ class Attribute(Generic[T]):
     @property
     def default_factory(self) -> Callable:
         return self._default_factory
+
+    @property
+    def attr_type(self) -> Type:
+        return self.__orig_class__.__args__[0]
 
 
 # Aliases of Attribute class

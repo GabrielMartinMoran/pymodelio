@@ -3,10 +3,14 @@
 
 # pymodelio
 
-A simple Python module for defining domain models and performing validations against them.
+A simple Python module for defining domain models, serializing, deserializing and validating them.
 
 ## What is this module for?
-Have you ever needed to validate a user input, the body of a request, re data obtained from a service like a database or an external api? Well, that's for `pymodelio` is built for, simplicity when defining your domain models and the restrictions arround them.
+
+Have you ever needed to validate a user input, the body of a request, data obtained from a service like a database or
+an external api, without needing to define serializers and deserializers for your class nested data structure?
+Well, that's what `pymodelio` is built for, simplicity when defining your domain models and the surrounding
+restrictions.
 
 ## How to install the module
 
@@ -28,13 +32,19 @@ decorator in each model, we just declare `Component` class as `class Component(B
 import uuid
 from typing import List
 
-from pymodelio import pymodelio_model, Attribute, UNDEFINED
-from pymodelio.validators import Validator, IntValidator, IterableValidator
+from pymodelio.attribute import Attribute
+from pymodelio.model import pymodelio_model
+from pymodelio.validators import ListValidator, StringValidator
+from pymodelio.validators.int_validator import IntValidator
+from pymodelio.validators.validator import Validator
 
 
 @pymodelio_model
 class Component:
-    __serial_no: Attribute[str](default_factory=lambda: uuid.uuid4().__str__())
+    __serial_no: Attribute[str](
+        validator=StringValidator(fixed_len=36, regex=r'^[a-z0-9-]+$'),
+        default_factory=lambda: uuid.uuid4().__str__()
+    )
 
     @property
     def serial_no(self) -> str:
@@ -43,49 +53,30 @@ class Component:
 
 @pymodelio_model
 class CPU(Component):
-    frequency: Attribute[int](validator=IntValidator())
-    cores: Attribute[int](validator=IntValidator())
+    _frequency: Attribute[int](validator=IntValidator(min_value=0))
+    cores: Attribute[int](validator=IntValidator(min_value=0))
 
-    @staticmethod
-    def from_dict(data: dict, auto_validate: bool = True) -> 'CPU':
-        return CPU(
-            frequency=data.get('frequency'),
-            cores=data.get('cores'),
-            auto_validate=auto_validate
-        )
+    @property
+    def frequency(self) -> int:
+        return self._frequency
 
 
 @pymodelio_model
 class RAM(Component):
-    frequency: Attribute[int](validator=IntValidator())
-    size: Attribute[int](validator=IntValidator())
-
-    @staticmethod
-    def from_dict(data: dict, auto_validate: bool = True) -> 'RAM':
-        return RAM(
-            frequency=data.get('frequency'),
-            size=data.get('size'),
-            auto_validate=auto_validate
-        )
+    frequency: Attribute[int](validator=IntValidator(min_value=0))
+    size: Attribute[int](validator=IntValidator(min_value=0))
 
 
 @pymodelio_model
 class Disk(Component):
-    size: Attribute[int](validator=IntValidator())
-
-    @staticmethod
-    def from_dict(data: dict, auto_validate: bool = True) -> 'Disk':
-        return Disk(
-            size=data.get('size'),
-            auto_validate=auto_validate
-        )
+    size: Attribute[int](validator=IntValidator(min_value=0))
 
 
 @pymodelio_model
 class Computer(Component):
     _cpu: Attribute[CPU](validator=Validator(expected_type=CPU))
-    _rams: Attribute[List[RAM]](validator=IterableValidator(elements_type=RAM))
-    _disks: Attribute[List[Disk]](validator=IterableValidator(elements_type=Disk))
+    _rams: Attribute[List[RAM]](validator=ListValidator(elements_type=RAM, allow_empty=False))
+    _disks: Attribute[List[Disk]](validator=ListValidator(elements_type=Disk))
 
     @property
     def cpu(self) -> CPU:
@@ -98,19 +89,28 @@ class Computer(Component):
     @property
     def disks(self) -> List[Disk]:
         return self._disks
-
-    @staticmethod
-    def from_dict(data: dict, auto_validate: bool = True) -> 'Computer':
-        return Computer(
-            serial_no=data.get('serial_no') if 'serial_no' in data else UNDEFINED,
-            cpu=CPU.from_dict(data.get('cpu'), auto_validate=False),
-            rams=[RAM.from_dict(x, auto_validate=False) for x in data.get('rams')],
-            disks=[Disk.from_dict(x, auto_validate=False) for x in data.get('disks')],
-            auto_validate=auto_validate
-        )
 ```
 
-### Using these specific models
+### Let's use these models
+
+You can do it by using the class constructors
+
+```py
+computer = Computer(
+    serial_no='123e4567-e89b-12d3-a456-426614174000',
+    cpu=CPU(frequency=3500, cores=8),
+    rams=[
+        RAM(frequency=1600, size=8),
+        RAM(frequency=1800, size=16)
+    ],
+    disks=[
+        Disk(size=1024),
+        Disk(size=512)
+    ]
+)
+```
+
+Or you can call `from_dict` factory constructor for instantiating the models by deserializing a python dictionary
 
 ```py
 computer = Computer.from_dict({
@@ -139,6 +139,56 @@ computer = Computer.from_dict({
     ]
 })
 ```
+
+### Wait a second, what is happening here?
+
+You probably noticed that in the example above, there are some protected and private attributes that are being set by
+providing their names without underscores.
+
+**Why is it doing that?**
+
+Some known Python modules that do similar things like pymodelio forces you to specify the protected or private
+attributes by passing some parameter in the type or validator description. The idea of pymodelio is to let you use the
+language conventions for defining that without losing the capability of automatically handling initialization if you
+want that.
+
+You can always specify which attributes are not exposed by the constructor using their public form by passing the
+parameter `initable=False` to the Attribute constructor.
+
+This module hugs the open/closed principle by allowing you to not define all your attributes public, but also letting
+you initialize them in their public form (based on python code writing conventions).
+
+Other great principle where this module is stood on, is that an instance of a domain model shouldn't exist if it is not
+valid. For ensuring that, pymodelio automatically validates the instantiated models if you don't specify the opposite (
+by passing the parameter `auto_validate=False`). So have in mind that for performance improvements, we could disable
+auto validation in nested models initialization when using the constructor way of instantiating the `Computer` because
+when the parent validator is called, it will validate the whole structure. Here you have the modified code:
+
+```py
+computer = Computer(
+    serial_no='123e4567-e89b-12d3-a456-426614174000',
+    cpu=CPU(frequency=3500, cores=8, auto_validate=False),
+    rams=[RAM(frequency=1600, size=8, auto_validate=False), RAM(frequency=1800, size=16, auto_validate=False)],
+    disks=[Disk(size=1024, auto_validate=False), Disk(size=512, auto_validate=False)]
+)
+```
+
+You can also pass this parameter for preventing automatic validations to the `from_dict` factory constructor, like this:
+
+```py
+computer = Computer.from_dict({
+    'serial_no': '123e4567-e89b-12d3-a456-426614174000',
+    'cpu': {'frequency': 3500, 'cores': 8},
+    'rams': [{'frequency': 1600, 'size': 8}, {'frequency': 1800, 'size': 16}],
+    'disks': [{'size': 1024}, {'size': 512}]
+}, auto_validate=False)
+```
+
+Other thing that differentiates pymodelio from other modules that have a similar job, is that when you use pymodelio,
+you have available a lot of already implementing validators that simplifies most cases like validating an email, the
+length of a string, the range of a number, the emptiness of a list, etc. Even if a validator is not already implemented,
+you can do it in a very easy way by inheriting from `Validator` class or using some exposed middleware model
+initialization methods. If you are interested on this, please scroll down until you find the *validation* section.
 
 ### Customizing the model's initialization workflow
 
@@ -215,6 +265,8 @@ component = Component(serial_no='123e4567-e89b-12d3-a456-426614174000', model_na
 print(component.serial_no)  # It will print '123e4567-e89b-12d3-a456-426614174000'
 print(component.model_name)  # It will print 'ABC123'
 ```
+
+## Validation
 
 ### Customizing the validation process
 
@@ -317,11 +369,11 @@ EmailValidator(nullable: bool = False, message: Optional[str] = None)
 BoolValidator(nullable: bool = False, message: Optional[str] = None)
 ```
 
-## Serialization
+## Serialization and de-serialization
 
-pymodelio models implement a `to_dict()` method that serializes the public attributes and properties (defined using
-the `property` decorator). For the example at the beginning of this documentation, calling `to_dict()` method in a
-computer's instance returns something like:
+For serialization, pymodelio models implement a `to_dict()` method that serializes the public attributes and
+properties (defined using the `property` decorator). For the example at the beginning of this documentation,
+calling `to_dict()` method in a computer's instance returns something like:
 
 ```py
 {
@@ -365,7 +417,22 @@ def to_dict(self) -> dict:
 
 ```
 
+For de-serialization, pymodelio models implement a `from_dict()` factory constructor that as it name says, it can be
+used
+for decoding python dictionaries into model instances as used in the first example shown. As `to_dict()`, `from_dict()`
+can also be implemented by a model and in that case, the model one will be used instead. The signature for overriding
+this method should be:
+
+```py
+@classmethod
+def from_dict(cls, data: dict, auto_validate: bool = True) -> CustomModel:
+    return CustomModel(**data)  # Replace CustomModel with your model and call the constructor as you need
+```
+
 ## Let's compare the same code using raw python against using pymodelio
+
+For this comparison, we are not implementing serialization and de-serialization in the raw Python models (pymodelio
+handles this automatically for its models).
 
 ### Using raw python
 
@@ -404,27 +471,26 @@ class RawPythonModel:
         assert self.public_attr >= self._PUBLIC_ATTR_MIN_VALUE,
         f'public_child_attr is lower than {self._PUBLIC_ATTR_MIN_VALUE}'
 
-    assert self.public_attr <= self._PUBLIC_ATTR_MAX_VALUE,
-    f'public_child_attr is greater than {self._PUBLIC_ATTR_MAX_VALUE}'
+        assert self.public_attr <= self._PUBLIC_ATTR_MAX_VALUE,
+        f'public_child_attr is greater than {self._PUBLIC_ATTR_MAX_VALUE}'
 
+        assert isinstance(self._protected_attr, str), '_protected_attr is not a valid str'
+        assert len(self._protected_attr) == self._PROTECTED_ATTR_FIXED_LENGTH,
+        f'_protected_attr length is different than {self._PROTECTED_ATTR_FIXED_LENGTH}'
+        assert re.compile(self._PROTECTED_ATTR_REGEX).match(self._protected_attr) is not None,
+        '_protected_attr does not match configured regex'
 
-assert isinstance(self._protected_attr, str), '_protected_attr is not a valid str'
-assert len(self._protected_attr) == self._PROTECTED_ATTR_FIXED_LENGTH,
-f'_protected_attr length is different than {self._PROTECTED_ATTR_FIXED_LENGTH}'
-assert re.compile(self._PROTECTED_ATTR_REGEX).match(self._protected_attr) is not None,
-'_protected_attr does not match configured regex'
+        assert isinstance(self.child_model_attr, RawPythonChildModel),
+        'child_model_attr is not a valid RawPythonChildModel'
+        self.child_model_attr.validate()
 
-assert isinstance(self.child_model_attr, RawPythonChildModel),
-'child_model_attr is not a valid RawPythonChildModel'
-self.child_model_attr.validate()
+        assert isinstance(self.children_model_attr, list), 'children_model_attr is not a valid list'
+        for child_model in self.children_model_attr:
+            child_model.validate()
 
-assert isinstance(self.children_model_attr, list), 'children_model_attr is not a valid list'
-for child_model in self.children_model_attr:
-    child_model.validate()
-
-assert isinstance(self.__private_attr, datetime), '__private_attr is not a valid datetime'
-
-assert isinstance(self.optional_attr, dict), 'optional_attr is not a valid dict'
+        assert isinstance(self.__private_attr, datetime), '__private_attr is not a valid datetime'
+        
+        assert isinstance(self.optional_attr, dict), 'optional_attr is not a valid dict'
 ```
 
 ### Using pymodelio

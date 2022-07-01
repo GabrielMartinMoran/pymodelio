@@ -28,4 +28,4 @@ class ModelSerializer:
 
     @classmethod
     def _is_model(cls, attr_value: Any) -> bool:
-        return hasattr(attr_value, '_is_pymodelio_model') and getattr(attr_value, '_is_pymodelio_model')
+        return hasattr(attr_value, '_is_pymodelio_model') and getattr(attr_value, '_is_pymodelio_model')()

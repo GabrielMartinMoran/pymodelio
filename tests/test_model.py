@@ -1,4 +1,6 @@
+import uuid
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 
@@ -36,7 +38,7 @@ def test_valid_model_hierarchy():
             }
         ]
     }
-    computer = Computer.from_dict(data)
+    computer = Computer.deserialize_from_dict(data)
     assert computer.serial_no == data['serial_no']
 
 
@@ -67,7 +69,7 @@ def test_invalid_submodel_as_child():
         ]
     }
     with pytest.raises(ModelValidationException) as ex_info:
-        Computer.from_dict(data)
+        Computer.deserialize_from_dict(data)
     assert ex_info.value.args[0] == 'Computer.cpu.frequency is not a valid int'
 
 
@@ -98,7 +100,7 @@ def test_invalid_submodel_in_list_as_child():
         ]
     }
     with pytest.raises(ModelValidationException) as ex_info:
-        Computer.from_dict(data)
+        Computer.deserialize_from_dict(data)
     assert ex_info.value.args[0] == 'Computer.disks[1].size is not a valid int'
 
 
@@ -145,7 +147,7 @@ def test_model_initialization_sets_private_attribute():
 
 def test_to_dict_serializes_public_model_attributes():
     data = {
-        'serial_no': 'computer-001',
+        'serial_no': '123e4567-e89b-12d3-a456-426614174000',
         'cpu': {
             'frequency': 3500,
             'cores': 8
@@ -169,7 +171,7 @@ def test_to_dict_serializes_public_model_attributes():
             }
         ]
     }
-    computer = Computer.from_dict(data)
+    computer = Computer.deserialize_from_dict(data)
     assert computer.to_dict() == {
         'cpu': {
             'cores': 8,
@@ -198,7 +200,7 @@ def test_to_dict_serializes_public_model_attributes():
                 'size': 16
             }
         ],
-        'serial_no': 'computer-001'
+        'serial_no': '123e4567-e89b-12d3-a456-426614174000'
     }
 
 
@@ -228,3 +230,34 @@ def test_model_definition_using_inheritance_from_base_model():
     model = ChildModel(parent_attr=12345, child_attr='asd')
     assert model.parent_attr == 12345
     assert model.child_attr == 'asd'
+
+
+@patch('uuid.uuid4', new=lambda: '123e4567-e89b-12d3-a456-426614174000')
+def test_valid_model_hierarchy(*args):
+    data = {
+        'serial_no': '123e4567-e89b-12d3-a456-426614174999',
+        'cpu': {
+            'frequency': 3500,
+            'cores': 8
+        },
+        'rams': [
+            {
+                'frequency': 1600,
+                'size': 8
+            },
+            {
+                'frequency': 1800,
+                'size': 16
+            }
+        ],
+        'disks': [
+            {
+                'size': 1024
+            },
+            {
+                'size': 512
+            }
+        ]
+    }
+    computer = Computer.from_dict(data)
+    assert computer.to_dict() == Computer.deserialize_from_dict(data).to_dict()
