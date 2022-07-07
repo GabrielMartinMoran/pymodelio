@@ -1,4 +1,4 @@
-from typing import List, Any, _UnionGenericAlias
+from typing import List, Any
 
 from pymodelio.attribute import Attribute
 from pymodelio.constants import UNDEFINED
@@ -153,7 +153,7 @@ class BaseModel:
             if list_type is None:
                 return attr_value
             # If the type is more than one. For instance -> a: List[Union[int, float]]
-            if list_type.__class__ == _UnionGenericAlias:
+            if list_type.__class__.__name__ in ['_GenericAlias', '_UnionGenericAlias']:
                 print('WARNING: pymodelio automatic deserialization does not handle multi typed lists of models')
                 return attr_value
             # If the type is not a model

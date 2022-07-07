@@ -29,10 +29,16 @@ def pymodelio_model(cls: type) -> type:
     :param cls: Class to be transformed into a pymodelio model
     """
     for method in base_model_overrides_child_always:
-        method_name = method.__name__
+        if isinstance(method, classmethod):
+            method_name = method.__func__.__name__
+        else:
+            method_name = method.__name__
         setattr(cls, method_name, method)
     for method in base_model_overrides_child_if_not_implemented:
-        method_name = method.__name__
+        if isinstance(method, classmethod):
+            method_name = method.__func__.__name__
+        else:
+            method_name = method.__name__
         if not hasattr(cls, method_name):
             setattr(cls, method_name, method)
 

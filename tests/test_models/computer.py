@@ -1,5 +1,5 @@
 import uuid
-from typing import List
+from typing import List, Union
 
 from pymodelio.attribute import Attribute
 from pymodelio.constants import UNDEFINED
