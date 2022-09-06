@@ -157,7 +157,7 @@ class BaseModel:
                 print('WARNING: pymodelio automatic deserialization does not handle multi typed lists of models')
                 return attr_value
             # If the type is not a model
-            if not hasattr(list_type, '_is_pymodelio_model') and not list_type._is_pymodelio_model():
+            if not hasattr(list_type, '_is_pymodelio_model') or not list_type._is_pymodelio_model():
                 return attr_value
             # At this point, the list is a list of models
             return [list_type.from_dict(x, auto_validate=False) for x in attr_value]
