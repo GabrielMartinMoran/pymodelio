@@ -1,12 +1,21 @@
 # flake8: noqa
 
-__version__ = '0.1.3'
+__version__ = '1.0.0'
 
 # constants
 from .constants import UNDEFINED
 
+# Settings
+from .settings.pymodelio_setting import PymodelioSetting
+from .settings.pymodelio_settings import PymodelioSettings
+
+# BaseModel for those who don't like the decorators :'(
+from .base_model import BaseModel
+
 # pymodelio_model decorator
-from .model import pymodelio_model
+from .decorators.model import model
+
+pymodelio_model = model
 
 # Attribute with all aliases
 from .attribute import Attribute
@@ -14,5 +23,4 @@ from .attribute import Attr
 from .attribute import ModelAttribute
 from .attribute import ModelAttr
 
-# BaseModel for those who don't like the decorators :'(
-from .base_model import BaseModel
+from .decorators.do_not_serialize import do_not_serialize

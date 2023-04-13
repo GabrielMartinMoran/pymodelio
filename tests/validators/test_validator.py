@@ -1,8 +1,8 @@
 import pytest
 
+import pymodelio
 from pymodelio.attribute import Attribute
 from pymodelio.exceptions.model_validation_exception import ModelValidationException
-from pymodelio.model import pymodelio_model
 from pymodelio.validators.validator import Validator
 
 
@@ -36,7 +36,7 @@ def test_validate_does_not_raise_error_when_provided_value_is_instance_of_expect
 
 
 def test_validate_does_not_raise_error_when_provided_value_is_a_model_and_is_valid():
-    @pymodelio_model
+    @pymodelio.model
     class ModelClass:
         name: Attribute[str](Validator(expected_type=str))
 
@@ -45,7 +45,7 @@ def test_validate_does_not_raise_error_when_provided_value_is_a_model_and_is_val
 
 
 def test_validate_raises_validation_error_when_provided_value_is_a_model_and_it_is_not_valid():
-    @pymodelio_model
+    @pymodelio.model
     class ModelClass:
         name: Attribute[str](Validator(expected_type=[str]))
 

@@ -32,14 +32,14 @@ decorator in each model, we just declare `Component` class as `class Component(B
 import uuid
 from typing import List
 
-from pymodelio.attribute import Attribute
-from pymodelio.model import pymodelio_model
+import pymodelio
+from pymodelio import Attribute
 from pymodelio.validators import ListValidator, StringValidator
 from pymodelio.validators.int_validator import IntValidator
 from pymodelio.validators.validator import Validator
 
 
-@pymodelio_model
+@pymodelio.model
 class Component:
     __serial_no: Attribute[str](
         validator=StringValidator(fixed_len=36, regex=r'^[a-z0-9-]+$'),
@@ -51,7 +51,7 @@ class Component:
         return self.__serial_no
 
 
-@pymodelio_model
+@pymodelio.model
 class CPU(Component):
     _frequency: Attribute[int](validator=IntValidator(min_value=0))
     cores: Attribute[int](validator=IntValidator(min_value=0))
@@ -61,18 +61,18 @@ class CPU(Component):
         return self._frequency
 
 
-@pymodelio_model
+@pymodelio.model
 class RAM(Component):
     frequency: Attribute[int](validator=IntValidator(min_value=0))
     size: Attribute[int](validator=IntValidator(min_value=0))
 
 
-@pymodelio_model
+@pymodelio.model
 class Disk(Component):
     size: Attribute[int](validator=IntValidator(min_value=0))
 
 
-@pymodelio_model
+@pymodelio.model
 class Computer(Component):
     _cpu: Attribute[CPU](validator=Validator(expected_type=CPU))
     _rams: Attribute[List[RAM]](validator=ListValidator(elements_type=RAM, allow_empty=False))
@@ -152,11 +152,40 @@ attributes by passing some parameter in the type or validator description. The i
 language conventions for defining that without losing the capability of automatically handling initialization if you
 want that.
 
+This module hugs the open/closed principle by allowing you to not define all your attributes public, but also letting
+you initialize them in their public form (based on python code writing conventions).
+
+**Wait! I don't want that! how can I disable it?**
+
 You can always specify which attributes are not exposed by the constructor using their public form by passing the
 parameter `initable=False` to the Attribute constructor.
 
-This module hugs the open/closed principle by allowing you to not define all your attributes public, but also letting
-you initialize them in their public form (based on python code writing conventions).
+Also, there is a global way of disabling this behaviour. You can configure `PymodelioSettings` for avoiding unwanted
+behaviours in this way:
+
+```py
+from pymodelio import PymodelioSettings
+from pymodelio import PymodelioSetting
+
+# This line will disable automatic protected attributes initialization (all attributes that start with '_')
+PymodelioSettings.set(PymodelioSetting.INIT_PROTECTED_ATTRS_BY_DEFAULT, False)
+
+# This line will disable automatic private attributes initialization (all attributes that start with '__')
+PymodelioSettings.set(PymodelioSetting.INIT_PRIVATE_ATTRS_BY_DEFAULT, False)
+```
+
+In case you want to get a value of a `PymodelioSetting`, you can do this:
+
+```py
+from pymodelio import PymodelioSettings
+from pymodelio import PymodelioSetting
+
+PymodelioSettings.get(PymodelioSetting.INIT_PROTECTED_ATTRS_BY_DEFAULT)  # True by default
+
+PymodelioSettings.get(PymodelioSetting.INIT_PRIVATE_ATTRS_BY_DEFAULT)  # True by default
+```
+
+**Let's talk about attribute's validation**
 
 Other great principle where this module is stood on, is that an instance of a domain model shouldn't exist if it is not
 valid. For ensuring that, pymodelio automatically validates the instantiated models if you don't specify the opposite (
@@ -195,7 +224,7 @@ initialization methods. If you are interested on this, please scroll down until 
 ```py
 @pymodelio_model
 class Model:
-    model_attr: Attribute[str]
+    model_attr: Attribute[str]()
 
     @classmethod
     def __before_init__(cls, *args, **kwargs) -> None:
@@ -248,8 +277,8 @@ underscores. For instance:
 ```py
 @pymodelio_model
 class Component:
-    __serial_no: Attribute[str]
-    _model_name: Attribute[str]
+    __serial_no: Attribute[str]()
+    _model_name: Attribute[str]()
 
     @property
     def serial_no(self) -> str:
@@ -417,6 +446,25 @@ def to_dict(self) -> dict:
 
 ```
 
+In case of properties (defined using the `property` decorator) that you don't want to serialize, you can use the
+`@do_not_serialize` decorator like this:
+
+```py
+@pymodelio.model
+class Person:
+    _name: Attribute[str]()
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    @pymodelio.do_not_serialize
+    def lowercase_name(self) -> str:
+        # This property won't be automatically serialized
+        return self._name.lower()
+```
+
 For de-serialization, pymodelio models implement a `from_dict()` factory constructor that as it name says, it can be
 used
 for decoding python dictionaries into model instances as used in the first example shown. As `to_dict()`, `from_dict()`
@@ -489,7 +537,7 @@ class RawPythonModel:
             child_model.validate()
 
         assert isinstance(self.__private_attr, datetime), '__private_attr is not a valid datetime'
-        
+
         assert isinstance(self.optional_attr, dict), 'optional_attr is not a valid dict'
 ```
 

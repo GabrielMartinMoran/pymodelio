@@ -1,8 +1,10 @@
-from typing import List, Any
+from typing import List, Any, Optional
 
-from pymodelio.attribute import Attribute
+from pymodelio import PymodelioSettings, PymodelioSetting
+from pymodelio.attribute import GenericAttribute
 from pymodelio.constants import UNDEFINED
-from pymodelio.model import overrides_child_always, overrides_child_if_not_implemented
+from pymodelio.decorators.overrides_child_always import overrides_child_always
+from pymodelio.decorators.overrides_child_if_not_implemented import overrides_child_if_not_implemented
 from pymodelio.model_serializer import ModelSerializer
 
 
@@ -30,8 +32,8 @@ class BaseModel:
     @overrides_child_always
     def _set_attributes(self, kwargs: dict) -> None:
         for attr_name, model_attr in self._get_model_attrs().items():
-            if not model_attr.initable:
-                if attr_name in kwargs:
+            if not self._is_initable(attr_name, model_attr):
+                if self._get_exposed_attr_name(attr_name) in kwargs:
                     raise NameError(f'{attr_name} attribute is not initable for class {self.__class__.__name__}')
                 continue
             exposed_attr_name = self._get_exposed_attr_name(attr_name)
@@ -68,10 +70,10 @@ class BaseModel:
         validated_attrs = {}
         annotations = self._get_annotations()
         for k, v in annotations.items():
-            if isinstance(v, Attribute):
+            if isinstance(v, GenericAttribute):
                 validated_attrs[k] = v
             # If Validated is a type and not an instance, it instantiates it using default values default
-            elif v.__origin__ == Attribute:
+            elif v.__origin__ == GenericAttribute:
                 validated_attrs[k] = v()
         return validated_attrs
 
@@ -88,24 +90,58 @@ class BaseModel:
         return prefixes
 
     @overrides_child_always
+    def _get_private_attr_prefixes(self) -> List[str]:
+        return [self._generate_private_attr_prefix(self.__class__)] + self._get_parent_private_attr_prefixes()
+
+    @overrides_child_always
     def _get_exposed_attr_name(self, attr_name: str) -> str:
         # Private attributes
-        private_attr_prefixes = [self._generate_private_attr_prefix(
-            self.__class__)] + self._get_parent_private_attr_prefixes()
-        for private_attr_prefix in private_attr_prefixes:
-            if attr_name.startswith(private_attr_prefix):
-                exposed_attr_name = attr_name[len(private_attr_prefix):]
-                if exposed_attr_name.endswith('__'):
-                    exposed_attr_name = exposed_attr_name[:2]
-                return exposed_attr_name
+        private_attr_prefix = self._get_private_attr_prefix(attr_name)
+        if private_attr_prefix is not None:
+            exposed_attr_name = attr_name[len(private_attr_prefix):]
+            if exposed_attr_name.endswith('__'):
+                exposed_attr_name = exposed_attr_name[:2]
+            return exposed_attr_name
         # Protected attributes
-        if attr_name.startswith('_'):
+        if self._is_protected_attr_name(attr_name, private_checked=True):
             exposed_attr_name = attr_name[1:]
             if exposed_attr_name.endswith('_'):
                 exposed_attr_name = exposed_attr_name[:1]
             return exposed_attr_name
         # Public attributes
         return attr_name
+
+    @overrides_child_always
+    def _is_protected_attr_name(self, attr_name: str, private_checked: bool = False) -> bool:
+        if private_checked:
+            is_private = False
+        else:
+            is_private = self._is_private_attr_name(attr_name)
+        return (not is_private) and attr_name.startswith('_')
+
+    @overrides_child_always
+    def _is_private_attr_name(self, attr_name: str) -> bool:
+        return self._get_private_attr_prefix(attr_name) is not None
+
+    @overrides_child_always
+    def _get_private_attr_prefix(self, attr_name: str) -> Optional[str]:
+        private_attr_prefixes = self._get_private_attr_prefixes()
+        for private_attr_prefix in private_attr_prefixes:
+            if attr_name.startswith(private_attr_prefix):
+                return private_attr_prefix
+        return None
+
+    @overrides_child_always
+    def _is_initable(self, attr_name: str, model_attr: GenericAttribute) -> bool:
+        if not model_attr.initable:
+            return False
+        if (not PymodelioSettings.get(PymodelioSetting.INIT_PROTECTED_ATTRS_BY_DEFAULT)) \
+                and self._is_protected_attr_name(attr_name):
+            return False
+        if (not PymodelioSettings.get(PymodelioSetting.INIT_PRIVATE_ATTRS_BY_DEFAULT)) \
+                and self._is_private_attr_name(attr_name):
+            return False
+        return True
 
     @overrides_child_always
     def validate(self, path: str = None) -> None:
@@ -123,7 +159,7 @@ class BaseModel:
 
     @overrides_child_if_not_implemented
     def _when_validating_attr(self, internal_attr_name: str, exposed_attr_name: str, attr_value: Any, attr_path: str,
-                              parent_path: str, pymodel_attribute: Attribute) -> None:
+                              parent_path: str, pymodel_attribute: GenericAttribute) -> None:
         pass
 
     @overrides_child_if_not_implemented
@@ -139,7 +175,7 @@ class BaseModel:
 
     @overrides_child_always
     @classmethod
-    def _map_attribute(cls, data: dict, exposed_attr_name: str, model_attr: Attribute) -> Any:
+    def _map_attribute(cls, data: dict, exposed_attr_name: str, model_attr: GenericAttribute) -> Any:
         attr_value = data.get(exposed_attr_name, model_attr.default_factory())
         if attr_value == UNDEFINED:
             return model_attr.default_factory()

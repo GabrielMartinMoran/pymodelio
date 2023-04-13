@@ -1,5 +1,7 @@
 from typing import Any
 
+from pymodelio import shared_vars
+
 
 class ModelSerializer:
 
@@ -15,12 +17,21 @@ class ModelSerializer:
     def _serialize_model(cls, model: Any) -> dict:
         serialized = {}
         for attr_name in cls._get_model_attrs(model):
+            if cls._is_marked_as_do_not_serialize(model, attr_name):
+                continue
             attr_value = getattr(model, attr_name)
             # If it is a function, we ignore it
             if callable(attr_value):
                 continue
             serialized[attr_name] = cls.serialize(attr_value)
         return serialized
+
+    @classmethod
+    def _is_marked_as_do_not_serialize(cls, model: Any, attr_name: str) -> bool:
+        class_qualname = model.__class__.__qualname__
+        if class_qualname not in shared_vars.to_do_not_serialize:
+            return False
+        return attr_name in shared_vars.to_do_not_serialize[class_qualname]
 
     @classmethod
     def _get_model_attrs(cls, model: Any) -> dict:

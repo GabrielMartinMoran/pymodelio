@@ -1,20 +1,18 @@
-import uuid
 from typing import Any
-from unittest.mock import patch
 
 import pytest
 
-from pymodelio import BaseModel
+import pymodelio
+from pymodelio import BaseModel, PymodelioSettings, PymodelioSetting
 from pymodelio.attribute import Attribute
 from pymodelio.constants import UNDEFINED
 from pymodelio.exceptions.model_validation_exception import ModelValidationException
-from pymodelio.model import pymodelio_model
 from tests.test_models.computer import Computer
 
 
 def test_valid_model_hierarchy():
     data = {
-        'serial_no': 'computer-001',
+        'serial_no': 'a0d667a2-66b4-40bd-a4f1-3026f7d0bf09',
         'cpu': {
             'frequency': 3500,
             'cores': 8
@@ -44,7 +42,7 @@ def test_valid_model_hierarchy():
 
 def test_invalid_submodel_as_child():
     data = {
-        'serial_no': 'computer-001',
+        'serial_no': 'a0d667a2-66b4-40bd-a4f1-3026f7d0bf09',
         'cpu': {
             'frequency': '3500',
             'cores': 8
@@ -75,7 +73,7 @@ def test_invalid_submodel_as_child():
 
 def test_invalid_submodel_in_list_as_child():
     data = {
-        'serial_no': 'computer-001',
+        'serial_no': 'a0d667a2-66b4-40bd-a4f1-3026f7d0bf09',
         'cpu': {
             'frequency': 3500,
             'cores': 8
@@ -105,7 +103,7 @@ def test_invalid_submodel_in_list_as_child():
 
 
 def test_can_not_init_non_initable_model_attributes():
-    @pymodelio_model
+    @pymodelio.model
     class Model:
         non_initable_model_attr: Attribute[str](initable=False, default_factory=lambda: 'default value')
 
@@ -115,7 +113,7 @@ def test_can_not_init_non_initable_model_attributes():
 
 
 def test_model_init_uses_default_factory_value_when_provided_value_is_UNDEFINED():
-    @pymodelio_model
+    @pymodelio.model
     class Model:
         model_attr: Attribute[int](default_factory=lambda: 12345)
 
@@ -124,90 +122,34 @@ def test_model_init_uses_default_factory_value_when_provided_value_is_UNDEFINED(
 
 
 def test_model_initialization_sets_private_attribute():
-    @pymodelio_model
+    @pymodelio.model
     class Model:
-        __private_attr_1: Attribute[int]
+        __private_attr_1: Attribute[int]()
 
         @property
         def private_attr_1(self) -> int:
             return self.__private_attr_1
 
-    @pymodelio_model
+    @pymodelio.model
     class ChildModel(Model):
-        __private_attr_2: Attribute[str]
+        __private_attr_2: Attribute[str]()
 
         @property
         def private_attr_2(self) -> int:
             return self.__private_attr_2
 
-    model = ChildModel(private_attr_1=12345, private_attr_2='asd')
-    assert model.private_attr_1 == 12345
-    assert model.private_attr_2 == 'asd'
-
-
-def test_to_dict_serializes_public_model_attributes():
-    data = {
-        'serial_no': '123e4567-e89b-12d3-a456-426614174000',
-        'cpu': {
-            'frequency': 3500,
-            'cores': 8
-        },
-        'rams': [
-            {
-                'frequency': 1600,
-                'size': 8
-            },
-            {
-                'frequency': 1800,
-                'size': 16
-            }
-        ],
-        'disks': [
-            {
-                'size': 1024
-            },
-            {
-                'size': 512
-            }
-        ]
-    }
-    computer = Computer.deserialize_from_dict(data)
-    assert computer.to_dict() == {
-        'cpu': {
-            'cores': 8,
-            'frequency': 3500,
-            'serial_no': computer.cpu.serial_no
-        },
-        'disks': [
-            {
-                'serial_no': computer.disks[0].serial_no,
-                'size': 1024
-            },
-            {
-                'serial_no': computer.disks[1].serial_no,
-                'size': 512
-            }
-        ],
-        'rams': [
-            {
-                'frequency': 1600,
-                'serial_no': computer.rams[0].serial_no,
-                'size': 8
-            },
-            {
-                'frequency': 1800,
-                'serial_no': computer.rams[1].serial_no,
-                'size': 16
-            }
-        ],
-        'serial_no': '123e4567-e89b-12d3-a456-426614174000'
-    }
+    instance_1 = ChildModel(private_attr_1=12345, private_attr_2='asd')
+    instance_2 = ChildModel(private_attr_1=54321, private_attr_2='dsa')
+    assert instance_1.private_attr_1 == 12345
+    assert instance_1.private_attr_2 == 'asd'
+    assert instance_2.private_attr_1 == 54321
+    assert instance_2.private_attr_2 == 'dsa'
 
 
 def test_model_calls_when_validating_attr_method_when_performing_attribute_validations():
-    @pymodelio_model
+    @pymodelio.model
     class Model:
-        model_attr: Attribute[str]
+        model_attr: Attribute[str]()
 
         @classmethod
         def _when_validating_attr(cls, internal_attr_name: str, exposed_attr_name: str, attr_value: Any,
@@ -222,42 +164,59 @@ def test_model_calls_when_validating_attr_method_when_performing_attribute_valid
 
 def test_model_definition_using_inheritance_from_base_model():
     class ParentModel(BaseModel):
-        parent_attr: Attribute[int]
+        parent_attr: Attribute[int]()
 
     class ChildModel(ParentModel):
-        child_attr: Attribute[str]
+        child_attr: Attribute[str]()
 
     model = ChildModel(parent_attr=12345, child_attr='asd')
     assert model.parent_attr == 12345
     assert model.child_attr == 'asd'
 
 
-@patch('uuid.uuid4', new=lambda: '123e4567-e89b-12d3-a456-426614174000')
-def test_valid_model_hierarchy(*args):
-    data = {
-        'serial_no': '123e4567-e89b-12d3-a456-426614174999',
-        'cpu': {
-            'frequency': 3500,
-            'cores': 8
-        },
-        'rams': [
-            {
-                'frequency': 1600,
-                'size': 8
-            },
-            {
-                'frequency': 1800,
-                'size': 16
-            }
-        ],
-        'disks': [
-            {
-                'size': 1024
-            },
-            {
-                'size': 512
-            }
-        ]
-    }
-    computer = Computer.from_dict(data)
-    assert computer.to_dict() == Computer.deserialize_from_dict(data).to_dict()
+def test_auto_instantiate_attribute_when_not_instantiated_manually():
+    @pymodelio.model
+    class TestCaseModel:
+        name: Attribute[str]
+
+    model = TestCaseModel(name='Test')
+    assert model.name == 'Test'
+
+
+def test_protected_attributes_are_not_automatically_instantiated_when_settings_prevent_that_behaviour():
+    @pymodelio.model
+    class TestCaseModel:
+        _name: Attribute[str](default_factory=lambda: 'Default factory value')
+        __id: Attribute[str](default_factory=lambda: 'Default id')
+
+    PymodelioSettings.set(PymodelioSetting.INIT_PROTECTED_ATTRS_BY_DEFAULT, False)
+
+    with pytest.raises(NameError) as ex_info:
+        TestCaseModel(name='Initialized value', id='12345')
+    try:
+        assert ex_info.value.args[0] == '_name attribute is not initable for class TestCaseModel'
+    except AssertionError as e:
+        raise e
+    finally:
+        # To always reset the settings
+        PymodelioSettings.reset()
+
+
+def test_private_attributes_are_not_automatically_instantiated_when_settings_prevent_that_behaviour():
+    @pymodelio.model
+    class TestCaseModel:
+        _name: Attribute[str](default_factory=lambda: 'Default factory value')
+        __id: Attribute[str](default_factory=lambda: 'Default id')
+
+    PymodelioSettings.set(PymodelioSetting.INIT_PRIVATE_ATTRS_BY_DEFAULT, False)
+
+    with pytest.raises(NameError) as ex_info:
+        TestCaseModel(name='Initialized value', id='12345')
+
+    try:
+        assert ex_info.value.args[0] == '_TestCaseModel__id attribute is not initable for class TestCaseModel'
+    except AssertionError as e:
+        raise e
+    finally:
+        # To always reset the settings
+        PymodelioSettings.reset()

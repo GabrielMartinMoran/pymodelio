@@ -1,20 +1,11 @@
-from typing import Callable
+from typing import TypeVar
 
-base_model_overrides_child_always = []
-base_model_overrides_child_if_not_implemented = []
+from pymodelio import shared_vars
 
-
-def overrides_child_always(method: Callable) -> Callable:
-    base_model_overrides_child_always.append(method)
-    return method
+T = TypeVar('T')
 
 
-def overrides_child_if_not_implemented(method: Callable) -> Callable:
-    base_model_overrides_child_if_not_implemented.append(method)
-    return method
-
-
-def pymodelio_model(cls: type) -> type:
+def model(cls: T) -> T:
     """
     Transforms a python class in a pymodelio model.
     Original class constructor is overridden and these methods are allowed to be implemented by the model:
@@ -28,13 +19,13 @@ def pymodelio_model(cls: type) -> type:
 
     :param cls: Class to be transformed into a pymodelio model
     """
-    for method in base_model_overrides_child_always:
+    for method in shared_vars.base_model_overrides_child_always:
         if isinstance(method, classmethod):
             method_name = method.__func__.__name__
         else:
             method_name = method.__name__
         setattr(cls, method_name, method)
-    for method in base_model_overrides_child_if_not_implemented:
+    for method in shared_vars.base_model_overrides_child_if_not_implemented:
         if isinstance(method, classmethod):
             method_name = method.__func__.__name__
         else:

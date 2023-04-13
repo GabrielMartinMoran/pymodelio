@@ -1,15 +1,15 @@
 import uuid
-from typing import List, Union
+from typing import List
 
+import pymodelio
 from pymodelio.attribute import Attribute
 from pymodelio.constants import UNDEFINED
-from pymodelio.model import pymodelio_model
 from pymodelio.validators import ListValidator, StringValidator
 from pymodelio.validators.int_validator import IntValidator
 from pymodelio.validators.validator import Validator
 
 
-@pymodelio_model
+@pymodelio.model
 class Component:
     __serial_no: Attribute[str](
         validator=StringValidator(fixed_len=36, regex=r'^[a-z0-9-]+$'),
@@ -21,7 +21,7 @@ class Component:
         return self.__serial_no
 
 
-@pymodelio_model
+@pymodelio.model
 class CPU(Component):
     _frequency: Attribute[int](validator=IntValidator(min_value=0))
     cores: Attribute[int](validator=IntValidator(min_value=0))
@@ -39,7 +39,7 @@ class CPU(Component):
         )
 
 
-@pymodelio_model
+@pymodelio.model
 class RAM(Component):
     frequency: Attribute[int](validator=IntValidator(min_value=0))
     size: Attribute[int](validator=IntValidator(min_value=0))
@@ -53,7 +53,7 @@ class RAM(Component):
         )
 
 
-@pymodelio_model
+@pymodelio.model
 class Disk(Component):
     size: Attribute[int](validator=IntValidator(min_value=0))
 
@@ -65,7 +65,7 @@ class Disk(Component):
         )
 
 
-@pymodelio_model
+@pymodelio.model
 class Computer(Component):
     _cpu: Attribute[CPU](validator=Validator(expected_type=CPU))
     _rams: Attribute[List[RAM]](validator=ListValidator(elements_type=RAM, allow_empty=False))

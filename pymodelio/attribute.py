@@ -5,7 +5,8 @@ from pymodelio.validators.validator import Validator
 T = TypeVar('T')
 
 
-class Attribute(Generic[T]):
+class GenericAttribute(Generic[T]):
+
     def __init__(self, validator: Optional[Validator] = None, initable: bool = True,
                  default_factory: Callable = None) -> None:
         self._validator = validator
@@ -32,8 +33,27 @@ class Attribute(Generic[T]):
     def attr_type(self) -> Type:
         return self.__orig_class__.__args__[0]
 
+    def __getitem__(self, attr_type: T) -> Callable[..., T]:
+        # Only declared for type hinting
+        raise NotImplementedError()
 
-# Aliases of Attribute class
-Attr = Attribute
-ModelAttribute = Attribute
-ModelAttr = Attribute
+
+# Indirections for type hinting
+class _AttributeRetriever(GenericAttribute):
+    def __getitem__(self, attr_type: T) -> Callable[..., T]:
+        return GenericAttribute[attr_type]
+
+
+PymodelioAttribute = _AttributeRetriever()
+
+# Exposed Attribute and aliases
+"""
+Any of these exposed attributes can be called using this signature:
+
+Attribute(validator: Optional[Validator] = None, initable: bool = True, default_factory: Callable = None)
+
+"""
+Attribute: GenericAttribute = PymodelioAttribute
+Attr: GenericAttribute = PymodelioAttribute
+ModelAttribute: GenericAttribute = PymodelioAttribute
+ModelAttr: GenericAttribute = PymodelioAttribute

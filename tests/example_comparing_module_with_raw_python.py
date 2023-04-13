@@ -2,8 +2,8 @@ import re
 from datetime import datetime
 from typing import List
 
+import pymodelio
 from pymodelio.attribute import Attribute
-from pymodelio.model import pymodelio_model
 from pymodelio.validators.datetime_validator import DatetimeValidator
 from pymodelio.validators import DictValidator
 from pymodelio.validators.int_validator import IntValidator
@@ -12,12 +12,12 @@ from pymodelio.validators.string_validator import StringValidator
 from pymodelio.validators.validator import Validator
 
 
-@pymodelio_model
+@pymodelio.model
 class PymodelioChildModel:
     public_child_attr: Attribute[int](validator=IntValidator())
 
 
-@pymodelio_model
+@pymodelio.model
 class PymodelioModel:
     public_attr: Attribute[int](validator=IntValidator(min_value=0, max_value=10))
     _protected_attr: Attribute[str](validator=StringValidator(fixed_len=5, regex='^[A-Z]+$'))  # Only capitalized chars
