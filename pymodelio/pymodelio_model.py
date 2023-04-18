@@ -167,7 +167,7 @@ class PymodelioModel:
         return cls(**attrs, auto_validate=auto_validate)
 
     @classmethod
-    def __map_attribute(cls, data: dict, exposed_attr_name: str, model_attr: PymodelioAttr) -> Any:
+    def __map_attribute(cls, data: dict, exposed_attr_name: str, model_attr: PymodelioAttr) -> Any:  # noqa: C901
         attr_value = data.get(exposed_attr_name, model_attr.default_factory())
         if attr_value == UNDEFINED:
             return model_attr.default_factory()
