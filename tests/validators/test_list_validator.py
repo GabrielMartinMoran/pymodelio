@@ -13,4 +13,4 @@ def test_validate_raises_validation_error_when_provided_value_is_not_a_list():
     validator = ListValidator(elements_type=int)
     with pytest.raises(ModelValidationException) as ex_info:
         validator.validate(set(), 'prop')
-    assert ex_info.value.args[0] == 'prop is not a valid list'
+    assert ex_info.value.args[0] == 'prop is not instance of list'

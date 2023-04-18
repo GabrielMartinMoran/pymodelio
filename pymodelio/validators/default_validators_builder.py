@@ -59,7 +59,7 @@ class DefaultValidatorsBuilder:
         if isinstance(attr_type, str):
             return _DestructuredType(outer=typing.ForwardRef, inners=[typing.ForwardRef(attr_type)])
         # other typings
-        if hasattr(attr_type, '__reduce__'):
+        if attr_type.__module__ == 'typing' and hasattr(attr_type, '__reduce__'):
             reduced = attr_type.__reduce__()[1]
             if len(reduced) == 1:
                 return _DestructuredType(outer=reduced[0])
@@ -84,7 +84,7 @@ class DefaultValidatorsBuilder:
                 return _DestructuredType(outer=_type, outer_nullable=True, inners=[cls._destructurate(args)])
             if _type == typing.Dict:
                 return _DestructuredType(outer=dict)
-        return _DestructuredType(outer=typing.Any)
+        return _DestructuredType(outer=attr_type)
 
     @classmethod
     def _instantiate_from_destructured(cls, destructured: _DestructuredType, nullable: bool = False) -> Validator:

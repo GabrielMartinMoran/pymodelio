@@ -29,7 +29,7 @@ class RawPythonChildModel:
         self.validate()
 
     def validate(self) -> None:
-        assert isinstance(self.public_child_attr, int), 'public_child_attr is not a valid int'
+        assert isinstance(self.public_child_attr, int), 'public_child_attr is not instance of int'
 
 
 class RawPythonModel:
@@ -52,26 +52,26 @@ class RawPythonModel:
         self.validate()
 
     def validate(self) -> None:
-        assert isinstance(self.public_attr, int), 'public_child_attr is not a valid int'
+        assert isinstance(self.public_attr, int), 'public_child_attr is not instance of int'
         assert self.public_attr >= self._PUBLIC_ATTR_MIN_VALUE, \
             f'public_child_attr is less than {self._PUBLIC_ATTR_MIN_VALUE}'
         assert self.public_attr <= self._PUBLIC_ATTR_MAX_VALUE, \
             f'public_child_attr is greater than {self._PUBLIC_ATTR_MAX_VALUE}'
 
-        assert isinstance(self._protected_attr, str), '_protected_attr is not a valid str'
+        assert isinstance(self._protected_attr, str), '_protected_attr is not instance of str'
         assert len(self._protected_attr) == self._PROTECTED_ATTR_FIXED_LENGTH, \
             f'_protected_attr length is different than {self._PROTECTED_ATTR_FIXED_LENGTH}'
         assert re.compile(self._PROTECTED_ATTR_REGEX).match(self._protected_attr) is not None, \
             '_protected_attr does not match configured regex'
 
         assert isinstance(self.child_model_attr, RawPythonChildModel), \
-            'child_model_attr is not a valid RawPythonChildModel'
+            'child_model_attr is not instance of RawPythonChildModel'
         self.child_model_attr.validate()
 
-        assert isinstance(self.children_model_attr, list), 'children_model_attr is not a valid list'
+        assert isinstance(self.children_model_attr, list), 'children_model_attr is not instance of list'
         for child_model in self.children_model_attr:
             child_model.validate()
 
-        assert isinstance(self.__private_attr, datetime), '__private_attr is not a valid datetime'
+        assert isinstance(self.__private_attr, datetime), '__private_attr is not instance of datetime'
 
-        assert isinstance(self.optional_attr, dict), 'optional_attr is not a valid dict'
+        assert isinstance(self.optional_attr, dict), 'optional_attr is not instance of dict'

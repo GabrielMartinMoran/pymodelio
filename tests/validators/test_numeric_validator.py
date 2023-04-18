@@ -20,7 +20,7 @@ def test_validate_raises_validation_error_when_provided_value_is_not_provided_ty
     validator = NumericValidator(expected_type=int)
     with pytest.raises(ModelValidationException) as ex_info:
         validator.validate('12345', 'prop')
-    assert ex_info.value.args[0] == 'prop is not a valid int'
+    assert ex_info.value.args[0] == 'prop is not instance of int'
 
 
 def test_validate_raises_validation_error_when_provided_value_is_lower_than_min():

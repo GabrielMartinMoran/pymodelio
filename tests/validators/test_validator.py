@@ -51,4 +51,4 @@ def test_validate_raises_validation_error_when_provided_value_is_a_model_and_it_
     validator = Validator(expected_type=ModelClass)
     with pytest.raises(ModelValidationException) as ex_info:
         validator.validate(ModelClass(name=12345, auto_validate=False), 'path')
-    assert ex_info.value.args[0] == 'path.name is not a valid str'
+    assert ex_info.value.args[0] == 'path.name is not instance of str'

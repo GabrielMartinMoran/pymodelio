@@ -30,12 +30,12 @@ def test_validate_raises_validation_error_when_provided_value_is_not_an_instance
         validator = IterableValidator(expected_type=expected_type)
         with pytest.raises(ModelValidationException) as ex_info:
             validator.validate(12345, 'prop')
-        assert ex_info.value.args[0] == f'prop is not a valid {expected_type.__name__}'
+        assert ex_info.value.args[0] == f'prop is not instance of {expected_type.__name__}'
 
 
 def test_validate_does_not_raise_error_when_provided_value_is_a_list_of_models_and_all_are_valid():
     class ModelClass(PymodelioModel):
-        name: Attr(str, validator=StringValidator())
+        name: Attr(str)
 
     expected_types = [list, tuple, set]
     for expected_type in expected_types:
@@ -46,14 +46,14 @@ def test_validate_does_not_raise_error_when_provided_value_is_a_list_of_models_a
 
 def test_validate_raises_validation_error_when_provided_value_is_a_list_of_models_and_at_least_one_is_not_valid():
     class ModelClass(PymodelioModel):
-        name: Attr(str, validator=StringValidator())
+        name: Attr(str)
 
     validator = IterableValidator(expected_type=list, elements_type=ModelClass)
     with pytest.raises(ModelValidationException) as ex_info:
         validator.validate([
             ModelClass(name='12345', auto_validate=False),
             ModelClass(name=12345, auto_validate=False)], 'path')
-    assert ex_info.value.args[0] == 'path[1].name is not a valid str'
+    assert ex_info.value.args[0] == 'path[1].name is not instance of str'
 
 
 def test_validate_does_not_raise_error_when_provided_value_is_compounded_of_different_types_and_elements_type_was_not_defined():

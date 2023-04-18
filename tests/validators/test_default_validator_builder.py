@@ -11,8 +11,11 @@ from pymodelio.validators.default_validators_builder import DefaultValidatorsBui
 
 
 def test_build_generates_validator_for_provided_type_if_that_type_is_configured():
-    class TestModel(PymodelioModel):
+    class TestPymodelioModel(PymodelioModel):
         name: Attr(str)
+
+    class NonPymodelioClass:
+        name: str
 
     configured_validators_map = {
         str: StringValidator,
@@ -29,7 +32,7 @@ def test_build_generates_validator_for_provided_type_if_that_type_is_configured(
         List: ListValidator,
         Tuple: TupleValidator,
         Set: SetValidator,
-        TestModel: Validator,
+        TestPymodelioModel: Validator,
     }
 
     # Non optionals
@@ -83,13 +86,19 @@ def test_build_generates_validator_for_provided_type_if_that_type_is_configured(
     assert validator.nullable
 
     # Forwarded references
-    validator = DefaultValidatorsBuilder.build('TestModel')
+    validator = DefaultValidatorsBuilder.build('TestPymodelioModel')
     assert isinstance(validator, ForwardRefValidator)
     assert validator._expected_types == (ForwardRef,)
     assert not validator.nullable
     #   After validation, the forwarded reference is corrected
-    validator.validate(TestModel(name='name'))
-    assert validator._expected_types == (TestModel,)
+    validator.validate(TestPymodelioModel(name='name'))
+    assert validator._expected_types == (TestPymodelioModel,)
+
+    # Non pymodelio classes
+    validator = DefaultValidatorsBuilder.build(NonPymodelioClass)
+    assert isinstance(validator, Validator)
+    assert validator._expected_types == (NonPymodelioClass,)
+    assert not validator.nullable
 
 
 def test_build_raises_error_when_auto_generation_is_too_complex():

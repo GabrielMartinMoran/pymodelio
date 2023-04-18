@@ -42,7 +42,7 @@ def test_validate_raises_validation_error_when_provided_value_is_not_a_valid_ema
     for invalid_email_address in invalid_email_addresses:
         with pytest.raises(ModelValidationException) as ex_info:
             validator.validate(invalid_email_address, invalid_email_address)
-        assert ex_info.value.args[0] == f'{invalid_email_address} is not a valid email address'
+        assert ex_info.value.args[0] == f'{invalid_email_address} is not instance of email address'
 
 
 def test_validate_does_not_raise_error_when_property_is_a_valid_email_address():

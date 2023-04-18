@@ -21,7 +21,7 @@ class IterableValidator(Validator):
             sub_path = '%s[%s]' % (path, i)
             if self.elements_type != (None,) and not isinstance(x, self.elements_type):
                 self.raise_validation_error(
-                    sub_path, 'is not a valid %s' % (' or '.join([t.__name__ for t in self.elements_type]))
+                    sub_path, 'is not instance of %s' % (' or '.join([t.__name__ for t in self.elements_type]))
                 )
             # If it is a model
             if hasattr(x, 'validate'):

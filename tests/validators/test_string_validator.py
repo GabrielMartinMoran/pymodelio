@@ -21,7 +21,7 @@ def test_validate_raises_validation_error_when_provided_value_is_not_string():
     validator = StringValidator()
     with pytest.raises(ModelValidationException) as ex_info:
         validator.validate(12345, 'prop')
-    assert ex_info.value.args[0] == 'prop is not a valid str'
+    assert ex_info.value.args[0] == 'prop is not instance of str'
 
 
 def test_validate_raises_validation_error_when_provided_value_length_is_lower_than_min_len():

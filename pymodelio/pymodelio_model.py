@@ -37,8 +37,6 @@ class PymodelioModel:
             if not self.__is_initable(attr_name, model_attr):
                 if self.__get_exposed_attr_name(attr_name) in kwargs:
                     raise NameError('%s attribute is not initable for class %s' % (attr_name, self.__class__.__name__))
-                if model_attr.validator is not None and model_attr.validator.nullable:
-                    attr_value = None
                 else:
                     attr_value = model_attr.default_factory()
             else:
@@ -73,9 +71,6 @@ class PymodelioModel:
             v = annotations[k]
             if isinstance(v, PymodelioAttr):
                 validated_attrs[k] = v
-            # If Validated is a type and not an instance, it instantiates it using default values default
-            elif hasattr(v, '__origin__') and v.__origin__ == PymodelioAttr:
-                validated_attrs[k] = v()
         return validated_attrs
 
     @classmethod
@@ -92,7 +87,7 @@ class PymodelioModel:
 
     @pymodelio_cached
     def __get_private_attr_prefixes(self) -> List[str]:
-        return [self.__generate_private_attr_prefix(self.__class__)] + self.__get_parent_private_attr_prefixes()
+        return ['__', self.__generate_private_attr_prefix(self.__class__)] + self.__get_parent_private_attr_prefixes()
 
     @pymodelio_cached
     def __get_exposed_attr_name(self, attr_name: str) -> str:
@@ -101,13 +96,13 @@ class PymodelioModel:
         if private_attr_prefix is not None:
             exposed_attr_name = attr_name[len(private_attr_prefix):]
             if exposed_attr_name.endswith('__'):
-                exposed_attr_name = exposed_attr_name[:2]
+                exposed_attr_name = exposed_attr_name[:-2]
             return exposed_attr_name
         # Protected attributes
         if self.__is_protected_attr_name(attr_name, private_checked=True):
             exposed_attr_name = attr_name[1:]
             if exposed_attr_name.endswith('_'):
-                exposed_attr_name = exposed_attr_name[:1]
+                exposed_attr_name = exposed_attr_name[:-1]
             return exposed_attr_name
         # Public attributes
         return attr_name
@@ -186,7 +181,10 @@ class PymodelioModel:
                 isinstance(attr_value, dict):
             return model_attr.attr_type.from_dict(attr_value, auto_validate=False)
         if isinstance(attr_value, list):
-            list_type = model_attr.attr_type.__args__[0] if len(model_attr.attr_type.__args__) > 0 else None
+            if model_attr.attr_type == list or len(model_attr.attr_type.__args__) == 0:
+                list_type = None
+            else:
+                list_type = model_attr.attr_type.__args__[0]
             # If the type of the list is not specified. For instance -> a: List
             if list_type is None:
                 return attr_value

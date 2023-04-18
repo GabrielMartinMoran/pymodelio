@@ -22,7 +22,7 @@ class Validator:
             return
         if self._expected_types is not None and not isinstance(value, self._expected_types):
             self.raise_validation_error(
-                path, 'is not a valid %s' % (' or '.join([t.__name__ for t in self._expected_types]))
+                path, 'is not instance of %s' % (' or '.join([t.__name__ for t in self._expected_types]))
             )
         # If it is a model
         if hasattr(value, 'validate'):

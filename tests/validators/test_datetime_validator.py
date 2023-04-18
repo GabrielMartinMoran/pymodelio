@@ -22,7 +22,7 @@ def test_validate_raises_validation_error_when_provided_value_is_not_a_datetime(
     validator = DatetimeValidator()
     with pytest.raises(ModelValidationException) as ex_info:
         validator.validate('12345', 'prop')
-    assert ex_info.value.args[0] == 'prop is not a valid datetime'
+    assert ex_info.value.args[0] == 'prop is not instance of datetime'
 
 
 def test_validate_does_not_raise_error_when_provided_value_is_valid():

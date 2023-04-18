@@ -8,7 +8,7 @@ def test_validate_raises_validation_error_when_provided_value_is_not_float():
     validator = FloatValidator()
     with pytest.raises(ModelValidationException) as ex_info:
         validator.validate('12345', 'prop')
-    assert ex_info.value.args[0] == 'prop is not a valid float'
+    assert ex_info.value.args[0] == 'prop is not instance of float'
 
 
 def test_validate_does_not_raise_error_when_provided_value_is_valid():

@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
+from typing import List, Union
 from unittest.mock import patch
 
-from pymodelio import PymodelioModel, Attr
+from pymodelio import PymodelioModel, Attr, UNDEFINED
 from tests.test_models.computer import Computer
 
 
@@ -42,3 +43,46 @@ def test_from_dict_deserializes_datetimes_from_string(*args):
 
     instance = TestCaseModel.from_dict({'dt': '2023-04-15T10:37:10.567892'})
     assert instance.dt == datetime(2023, 4, 15, 10, 37, 10, 567892, tzinfo=timezone.utc)
+
+
+def test_from_dict_sets_attr_by_factory_default_when_value_is_undefined():
+    class TestCaseModel(PymodelioModel):
+        attr: Attr(str, default_factory=lambda: 'TEST')
+
+    instance = TestCaseModel.from_dict({'attr': UNDEFINED})
+    assert instance.attr == 'TEST'
+
+
+def test_from_dict_sets_datetime_attr_as_the_serialized_value_when_it_fails_on_parsing_the_datetime():
+    class TestCaseModel(PymodelioModel):
+        attr: Attr(datetime, validator=None)
+
+    instance = TestCaseModel.from_dict({'attr': 'INVALID_DATE'})
+    assert instance.attr == 'INVALID_DATE'
+
+
+def test_from_dict_does_not_deserialize_list_items_when_list_type_was_not_specified():
+    class TestCaseModel(PymodelioModel):
+        attr: Attr(list, validator=None)
+
+    instance = TestCaseModel.from_dict({'attr': [1, 'a', 2.5]})
+    assert instance.attr == [1, 'a', 2.5]
+
+
+def test_from_dict_does_not_deserialize_list_items_when_list_is_defined_as_union_of_types():
+    class TestCaseModel(PymodelioModel):
+        attr: Attr(List[Union[int, float]], validator=None)
+
+    instance = TestCaseModel.from_dict({'attr': [1, 2.5]})
+    assert instance.attr == [1, 2.5]
+
+
+def test_from_dict_does_not_deserialize_list_items_when_items_are_not_a_pymodelio_model():
+    class ListItem:
+        index: int
+
+    class TestCaseModel(PymodelioModel):
+        attr: Attr(List[ListItem], validator=None)
+
+    instance = TestCaseModel.from_dict({'attr': [{'index': 1}]})
+    assert instance.attr == [{'index': 1}]

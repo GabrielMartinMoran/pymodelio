@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import Any, Optional, List, Set, Tuple, Dict, Union
+from unittest.mock import patch
 
 import pytest
 
-import pymodelio
 from pymodelio import PymodelioModel, PymodelioSettings, PymodelioSetting, shared_vars
 from pymodelio.attribute import Attr, PymodelioAttr
 from pymodelio.constants import UNDEFINED
@@ -70,7 +70,7 @@ def test_invalid_submodel_as_child():
     }
     with pytest.raises(ModelValidationException) as ex_info:
         Computer.deserialize_from_dict(data)
-    assert ex_info.value.args[0] == 'Computer.cpu.frequency is not a valid int'
+    assert ex_info.value.args[0] == 'Computer.cpu.frequency is not instance of int'
 
 
 def test_invalid_submodel_in_list_as_child():
@@ -101,7 +101,7 @@ def test_invalid_submodel_in_list_as_child():
     }
     with pytest.raises(ModelValidationException) as ex_info:
         Computer.deserialize_from_dict(data)
-    assert ex_info.value.args[0] == 'Computer.disks[1].size is not a valid int'
+    assert ex_info.value.args[0] == 'Computer.disks[1].size is not instance of int'
 
 
 def test_can_not_init_non_initable_model_attributes():
@@ -121,7 +121,25 @@ def test_model_init_uses_default_factory_value_when_provided_value_is_UNDEFINED(
     assert model.model_attr == 12345
 
 
-def test_model_initialization_sets_private_attribute():
+def test_model_initialization_sets_protected_attributes():
+    class Model(PymodelioModel):
+        _protected_attr_1: Attr(int)
+        _protected_attr_2_: Attr(str)
+
+        @property
+        def protected_attr_1(self) -> int:
+            return self._protected_attr_1
+
+        @property
+        def protected_attr_2(self) -> str:
+            return self._protected_attr_2_
+
+    instance_1 = Model(protected_attr_1=12345, protected_attr_2='asd')
+    assert instance_1.protected_attr_1 == 12345
+    assert instance_1.protected_attr_2 == 'asd'
+
+
+def test_model_initialization_sets_private_attributes():
     class Model(PymodelioModel):
         __private_attr_1: Attr(int)
 
@@ -131,17 +149,24 @@ def test_model_initialization_sets_private_attribute():
 
     class ChildModel(Model):
         __private_attr_2: Attr(str)
+        __private_attr_3__: Attr(float)
 
         @property
         def private_attr_2(self) -> str:
             return self.__private_attr_2
 
-    instance_1 = ChildModel(private_attr_1=12345, private_attr_2='asd')
-    instance_2 = ChildModel(private_attr_1=54321, private_attr_2='dsa')
+        @property
+        def private_attr_3(self) -> float:
+            return self.__private_attr_3__
+
+    instance_1 = ChildModel(private_attr_1=12345, private_attr_2='asd', private_attr_3=123.4)
+    instance_2 = ChildModel(private_attr_1=54321, private_attr_2='dsa', private_attr_3=432.1)
     assert instance_1.private_attr_1 == 12345
     assert instance_1.private_attr_2 == 'asd'
+    assert instance_1.private_attr_3 == 123.4
     assert instance_2.private_attr_1 == 54321
     assert instance_2.private_attr_2 == 'dsa'
+    assert instance_2.private_attr_3 == 432.1
 
 
 def test_model_calls_when_validating_attr_method_when_performing_attribute_validations():
@@ -345,3 +370,31 @@ def test_default_validator_is_used_when_no_validator_is_defined():
 
         # Reset the cache because we are re-using the same class
         PymodelioCache.reset()
+
+
+def test_repr_returns_a_str_representation_of_the_model():
+    class Person(PymodelioModel):
+        name: Attr(str)
+        created_at: Attr(datetime)
+        age: Attr(int)
+        grandchild: Attr(Optional['Person'])
+
+    person = Person(
+        name='Rick Sánchez', created_at=datetime(2023, 4, 18, 17, 33, 15, 605730, None), age=70,
+        grandchild=Person(name='Morty Smith', created_at=datetime(2023, 4, 18, 17, 33, 15, 605730, None),
+                          age=14)
+    )
+
+    expected = ('Person(age=70, created_at=datetime(2023, 4, 18, 17, 33, 15, 605730, None), '
+                'grandchild=Person(age=14, created_at=datetime(2023, 4, 18, 17, 33, 15, '
+                "605730, None), grandchild=None, name='Morty Smith'), name='Rick Sánchez')")
+
+    assert str(person) == expected
+
+
+def test_attr_default_value_is_set_when_attr_is_not_initable():
+    class TestCaseModel(PymodelioModel):
+        attr: Attr(Optional[str], initable=False, default_factory=lambda: 'TEST')
+
+    instance = TestCaseModel()
+    assert instance.attr == 'TEST'
