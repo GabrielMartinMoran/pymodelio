@@ -2,31 +2,24 @@ import re
 from datetime import datetime
 from typing import List
 
-import pymodelio
-from pymodelio.attribute import Attribute
-from pymodelio.validators.datetime_validator import DatetimeValidator
-from pymodelio.validators import DictValidator
+from pymodelio import PymodelioModel
+from pymodelio.attribute import Attr
 from pymodelio.validators.int_validator import IntValidator
-from pymodelio.validators import IterableValidator
 from pymodelio.validators.string_validator import StringValidator
-from pymodelio.validators.validator import Validator
 
 
-@pymodelio.model
-class PymodelioChildModel:
-    public_child_attr: Attribute[int](validator=IntValidator())
+class PymodelioChildModel(PymodelioModel):
+    public_child_attr: Attr(int)
 
 
-@pymodelio.model
-class PymodelioModel:
-    public_attr: Attribute[int](validator=IntValidator(min_value=0, max_value=10))
-    _protected_attr: Attribute[str](validator=StringValidator(fixed_len=5, regex='^[A-Z]+$'))  # Only capitalized chars
-    __private_attr: Attribute[datetime](validator=DatetimeValidator())
-    child_model_attr: Attribute[PymodelioChildModel](validator=Validator(expected_type=PymodelioChildModel))
-    children_model_attr: Attribute[List[PymodelioChildModel]](
-        validator=IterableValidator(elements_type=PymodelioChildModel))
-    optional_attr: Attribute[dict](validator=DictValidator())
-    non_initable_attr: Attribute[List[str]](initable=False, default_factory=list)
+class PymodelioParentModel(PymodelioModel):
+    public_attr: Attr(int, validator=IntValidator(min_value=0, max_value=10))
+    _protected_attr: Attr(str, validator=StringValidator(fixed_len=5, regex='^[A-Z]+$'))  # Only capitalized chars
+    __private_attr: Attr(datetime)
+    child_model_attr: Attr(PymodelioChildModel)
+    children_model_attr: Attr(List[PymodelioChildModel])
+    optional_attr: Attr(dict, default_factory=dict)
+    non_initable_attr: Attr(List[str], initable=False, default_factory=list)
 
 
 class RawPythonChildModel:
@@ -61,7 +54,7 @@ class RawPythonModel:
     def validate(self) -> None:
         assert isinstance(self.public_attr, int), 'public_child_attr is not a valid int'
         assert self.public_attr >= self._PUBLIC_ATTR_MIN_VALUE, \
-            f'public_child_attr is lower than {self._PUBLIC_ATTR_MIN_VALUE}'
+            f'public_child_attr is less than {self._PUBLIC_ATTR_MIN_VALUE}'
         assert self.public_attr <= self._PUBLIC_ATTR_MAX_VALUE, \
             f'public_child_attr is greater than {self._PUBLIC_ATTR_MAX_VALUE}'
 

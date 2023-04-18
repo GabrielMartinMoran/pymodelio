@@ -10,3 +10,6 @@ from .float_validator import FloatValidator
 from .int_validator import IntValidator
 from .iterable_validator import IterableValidator
 from .list_validator import ListValidator
+from .set_validator import SetValidator
+from .tuple_validator import TupleValidator
+from .forward_ref_validator import ForwardRefValidator

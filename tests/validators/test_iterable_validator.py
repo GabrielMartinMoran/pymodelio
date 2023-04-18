@@ -1,7 +1,8 @@
 import pytest
 
 import pymodelio
-from pymodelio.attribute import Attribute
+from pymodelio import PymodelioModel
+from pymodelio.attribute import Attr
 from pymodelio.exceptions.model_validation_exception import ModelValidationException
 from pymodelio.validators import IterableValidator, StringValidator
 
@@ -33,9 +34,8 @@ def test_validate_raises_validation_error_when_provided_value_is_not_an_instance
 
 
 def test_validate_does_not_raise_error_when_provided_value_is_a_list_of_models_and_all_are_valid():
-    @pymodelio.model
-    class ModelClass:
-        name: Attribute[str](StringValidator())
+    class ModelClass(PymodelioModel):
+        name: Attr(str, validator=StringValidator())
 
     expected_types = [list, tuple, set]
     for expected_type in expected_types:
@@ -45,9 +45,8 @@ def test_validate_does_not_raise_error_when_provided_value_is_a_list_of_models_a
 
 
 def test_validate_raises_validation_error_when_provided_value_is_a_list_of_models_and_at_least_one_is_not_valid():
-    @pymodelio.model
-    class ModelClass:
-        name: Attribute[str](StringValidator())
+    class ModelClass(PymodelioModel):
+        name: Attr(str, validator=StringValidator())
 
     validator = IterableValidator(expected_type=list, elements_type=ModelClass)
     with pytest.raises(ModelValidationException) as ex_info:

@@ -27,7 +27,7 @@ def test_validate_raises_validation_error_when_provided_value_is_lower_than_min(
     validator = NumericValidator(expected_type=int, min_value=10)
     with pytest.raises(ModelValidationException) as ex_info:
         validator.validate(9, 'prop')
-    assert ex_info.value.args[0] == 'prop is lower than 10'
+    assert ex_info.value.args[0] == 'prop is less than 10'
 
 
 def test_validate_does_not_raise_error_when_provided_value_is_valid_and_value_is_greater_than_min():

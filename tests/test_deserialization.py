@@ -1,5 +1,7 @@
+from datetime import datetime, timezone
 from unittest.mock import patch
 
+from pymodelio import PymodelioModel, Attr
 from tests.test_models.computer import Computer
 
 
@@ -32,3 +34,11 @@ def test_from_dict_deserializes_the_model(*args):
     }
     computer = Computer.from_dict(data)
     assert computer.to_dict() == Computer.deserialize_from_dict(data).to_dict()
+
+
+def test_from_dict_deserializes_datetimes_from_string(*args):
+    class TestCaseModel(PymodelioModel):
+        dt: Attr(datetime)
+
+    instance = TestCaseModel.from_dict({'dt': '2023-04-15T10:37:10.567892'})
+    assert instance.dt == datetime(2023, 4, 15, 10, 37, 10, 567892, tzinfo=timezone.utc)

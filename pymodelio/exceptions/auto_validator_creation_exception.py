@@ -1,0 +1,2 @@
+class AutoValidatorCreationException(Exception):
+    pass

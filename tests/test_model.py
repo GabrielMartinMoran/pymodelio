@@ -1,12 +1,14 @@
-from typing import Any
+from datetime import datetime
+from typing import Any, Optional, List, Set, Tuple, Dict, Union
 
 import pytest
 
 import pymodelio
-from pymodelio import BaseModel, PymodelioSettings, PymodelioSetting
-from pymodelio.attribute import Attribute
+from pymodelio import PymodelioModel, PymodelioSettings, PymodelioSetting, shared_vars
+from pymodelio.attribute import Attr, PymodelioAttr
 from pymodelio.constants import UNDEFINED
 from pymodelio.exceptions.model_validation_exception import ModelValidationException
+from pymodelio.pymodelio_cache import PymodelioCache
 from tests.test_models.computer import Computer
 
 
@@ -103,9 +105,8 @@ def test_invalid_submodel_in_list_as_child():
 
 
 def test_can_not_init_non_initable_model_attributes():
-    @pymodelio.model
-    class Model:
-        non_initable_model_attr: Attribute[str](initable=False, default_factory=lambda: 'default value')
+    class Model(PymodelioModel):
+        non_initable_model_attr: Attr(str, initable=False, default_factory=lambda: 'default value')
 
     with pytest.raises(NameError) as ex_info:
         Model(non_initable_model_attr='custom value')
@@ -113,29 +114,26 @@ def test_can_not_init_non_initable_model_attributes():
 
 
 def test_model_init_uses_default_factory_value_when_provided_value_is_UNDEFINED():
-    @pymodelio.model
-    class Model:
-        model_attr: Attribute[int](default_factory=lambda: 12345)
+    class Model(PymodelioModel):
+        model_attr: Attr(int, default_factory=lambda: 12345)
 
     model = Model(model_attr=UNDEFINED)
     assert model.model_attr == 12345
 
 
 def test_model_initialization_sets_private_attribute():
-    @pymodelio.model
-    class Model:
-        __private_attr_1: Attribute[int]()
+    class Model(PymodelioModel):
+        __private_attr_1: Attr(int)
 
         @property
         def private_attr_1(self) -> int:
             return self.__private_attr_1
 
-    @pymodelio.model
     class ChildModel(Model):
-        __private_attr_2: Attribute[str]()
+        __private_attr_2: Attr(str)
 
         @property
-        def private_attr_2(self) -> int:
+        def private_attr_2(self) -> str:
             return self.__private_attr_2
 
     instance_1 = ChildModel(private_attr_1=12345, private_attr_2='asd')
@@ -147,13 +145,12 @@ def test_model_initialization_sets_private_attribute():
 
 
 def test_model_calls_when_validating_attr_method_when_performing_attribute_validations():
-    @pymodelio.model
-    class Model:
-        model_attr: Attribute[str]()
+    class Model(PymodelioModel):
+        model_attr: Attr(str)
 
         @classmethod
         def _when_validating_attr(cls, internal_attr_name: str, exposed_attr_name: str, attr_value: Any,
-                                  attr_path: str, parent_path: str, pymodel_attribute: Attribute) -> None:
+                                  attr_path: str, parent_path: str, attr: PymodelioAttr) -> None:
             if exposed_attr_name == 'model_attr' and attr_value != 'Hello world':
                 raise ModelValidationException(f'{attr_path} does not match "Hello world"')
 
@@ -163,11 +160,11 @@ def test_model_calls_when_validating_attr_method_when_performing_attribute_valid
 
 
 def test_model_definition_using_inheritance_from_base_model():
-    class ParentModel(BaseModel):
-        parent_attr: Attribute[int]()
+    class ParentModel(PymodelioModel):
+        parent_attr: Attr(int)
 
     class ChildModel(ParentModel):
-        child_attr: Attribute[str]()
+        child_attr: Attr(str)
 
     model = ChildModel(parent_attr=12345, child_attr='asd')
     assert model.parent_attr == 12345
@@ -175,19 +172,17 @@ def test_model_definition_using_inheritance_from_base_model():
 
 
 def test_auto_instantiate_attribute_when_not_instantiated_manually():
-    @pymodelio.model
-    class TestCaseModel:
-        name: Attribute[str]
+    class TestCaseModel(PymodelioModel):
+        name: Attr(str)
 
     model = TestCaseModel(name='Test')
     assert model.name == 'Test'
 
 
 def test_protected_attributes_are_not_automatically_instantiated_when_settings_prevent_that_behaviour():
-    @pymodelio.model
-    class TestCaseModel:
-        _name: Attribute[str](default_factory=lambda: 'Default factory value')
-        __id: Attribute[str](default_factory=lambda: 'Default id')
+    class TestCaseModel(PymodelioModel):
+        _name: Attr(str, default_factory=lambda: 'Default factory value')
+        __id: Attr(str, default_factory=lambda: 'Default id')
 
     PymodelioSettings.set(PymodelioSetting.INIT_PROTECTED_ATTRS_BY_DEFAULT, False)
 
@@ -203,10 +198,9 @@ def test_protected_attributes_are_not_automatically_instantiated_when_settings_p
 
 
 def test_private_attributes_are_not_automatically_instantiated_when_settings_prevent_that_behaviour():
-    @pymodelio.model
-    class TestCaseModel:
-        _name: Attribute[str](default_factory=lambda: 'Default factory value')
-        __id: Attribute[str](default_factory=lambda: 'Default id')
+    class TestCaseModel(PymodelioModel):
+        _name: Attr(str, default_factory=lambda: 'Default factory value')
+        __id: Attr(str, default_factory=lambda: 'Default id')
 
     PymodelioSettings.set(PymodelioSetting.INIT_PRIVATE_ATTRS_BY_DEFAULT, False)
 
@@ -220,3 +214,134 @@ def test_private_attributes_are_not_automatically_instantiated_when_settings_pre
     finally:
         # To always reset the settings
         PymodelioSettings.reset()
+
+
+def test_default_validator_is_used_when_no_validator_is_defined():
+    CASES = [
+        {
+            'type': str,
+            'invalid_example': 12345,
+            'valid_examples': ["12345"],
+        },
+        {
+            'type': int,
+            'invalid_example': "12345",
+            'valid_examples': [12345],
+        },
+        {
+            'type': float,
+            'invalid_example': "12345",
+            'valid_examples': [12345.0],
+        },
+        {
+            'type': dict,
+            'invalid_example': "12345",
+            'valid_examples': [{'foo': 'bar'}],
+        },
+        {
+            'type': list,
+            'invalid_example': "12345",
+            'valid_examples': [[1, 2, 3]],
+        },
+        {
+            'type': set,
+            'invalid_example': "12345",
+            'valid_examples': [{1, 2, 3}],
+        },
+        {
+            'type': tuple,
+            'invalid_example': "12345",
+            'valid_examples': [(1, 2, 3)],
+        },
+        {
+            'type': bool,
+            'invalid_example': "12345",
+            'valid_examples': [True],
+        },
+        {
+            'type': datetime,
+            'invalid_example': "12345",
+            'valid_examples': [datetime.now()],
+        },
+        {
+            'type': Optional[str],
+            'invalid_example': 12345,
+            'valid_examples': [None, "12345"],
+        },
+        {
+            'type': Optional[dict],
+            'invalid_example': 12345,
+            'valid_examples': [None, {"foo": "bar"}],
+        },
+        {
+            'type': Optional[List[int]],
+            'invalid_example': 12345,
+            'valid_examples': [None, [12345]],
+        },
+        {
+            'type': Optional[Set[int]],
+            'invalid_example': 12345,
+            'valid_examples': [None, {12345}],
+        },
+        {
+            'type': Optional[Tuple[int]],
+            'invalid_example': 12345,
+            'valid_examples': [None, (12345,)],
+        },
+        {
+            'type': List[int],
+            'invalid_example': 12345,
+            'valid_examples': [[12345]],
+        },
+        {
+            'type': Set[int],
+            'invalid_example': 12345,
+            'valid_examples': [{12345}],
+        },
+        {
+            'type': Tuple[int],
+            'invalid_example': 12345,
+            'valid_examples': [(12345,)],
+        },
+        {
+            'type': Any,
+            'invalid_example': None,
+            'valid_examples': [12345, "12345", 12345.0, list(), tuple(), set(), dict()],
+        },
+        {
+            'type': Dict,
+            'invalid_example': None,
+            'valid_examples': [dict()],
+        },
+        {
+            'type': Union[str, int, dict],
+            'invalid_example': None,
+            'valid_examples': ["12345", 12345, dict()],
+        },
+        {
+            'type': Union[str, int, dict, None],
+            'invalid_example': [],
+            'valid_examples': ["12345", 12345, dict(), None],
+        }
+    ]
+
+    for case in CASES:
+        _type = case['type']
+        invalid_example = case['invalid_example']
+        valid_examples = case['valid_examples']
+
+        print(f'Testing type case: {_type}')
+
+        class TestCaseModel(PymodelioModel):
+            attr: Attr(_type)
+
+        # Invalid case raises error
+        with pytest.raises(ModelValidationException):
+            TestCaseModel(attr=invalid_example)
+
+        # Valid cases do not raise error
+        for valid_example in valid_examples:
+            TestCaseModel(attr=valid_example)
+
+        # Reset the cache because we are re-using the same class
+        PymodelioCache.reset()

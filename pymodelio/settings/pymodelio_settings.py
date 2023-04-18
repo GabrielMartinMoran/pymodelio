@@ -7,7 +7,10 @@ from pymodelio.settings.pymodelio_setting import PymodelioSetting
 class PymodelioSettings:
     __initial_settings = {
         PymodelioSetting.INIT_PROTECTED_ATTRS_BY_DEFAULT: True,
-        PymodelioSetting.INIT_PRIVATE_ATTRS_BY_DEFAULT: True
+        PymodelioSetting.INIT_PRIVATE_ATTRS_BY_DEFAULT: True,
+        PymodelioSetting.USE_CACHE_OPTIMIZATIONS: True,
+        PymodelioSetting.AUTO_PARSE_DATES_AS_UTC: True,
+        PymodelioSetting.USE_DEFAULT_ATTR_VALIDATOR_IF_NOT_DEFINED: True
     }
 
     __settings = deepcopy(__initial_settings)

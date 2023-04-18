@@ -1,5 +1,7 @@
+from datetime import datetime, timezone
+
 import pymodelio
-from pymodelio import Attribute
+from pymodelio import Attr, PymodelioModel
 from tests.test_models.computer import Computer
 
 
@@ -63,9 +65,8 @@ def test_to_dict_serializes_public_model_attributes():
 
 
 def test_to_dict_does_not_serialize_properties_marked_with_do_not_serialize_decorator():
-    @pymodelio.model
-    class TestCaseModel:
-        _name: Attribute[str]()
+    class TestCaseModel(PymodelioModel):
+        _name: Attr(str)
 
         @property
         def name(self) -> str:
@@ -80,3 +81,11 @@ def test_to_dict_does_not_serialize_properties_marked_with_do_not_serialize_deco
 
     assert instance.lowercase_name == 'test name'
     assert instance.to_dict() == {'name': 'Test Name'}
+
+
+def test_to_dict_serializes_datetimes_to_iso_string(*args):
+    class TestCaseModel(PymodelioModel):
+        dt: Attr(datetime)
+
+    instance = TestCaseModel(dt=datetime(2023, 4, 15, 10, 37, 10, 567892, tzinfo=timezone.utc))
+    assert instance.to_dict() == {'dt': '2023-04-15T10:37:10.567892+00:00'}

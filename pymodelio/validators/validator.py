@@ -21,12 +21,13 @@ class Validator:
                 self.raise_validation_error(path, 'must not be None')
             return
         if self._expected_types is not None and not isinstance(value, self._expected_types):
-            self.raise_validation_error(path,
-                                        f'is not a valid {" or ".join([t.__name__ for t in self._expected_types])}')
+            self.raise_validation_error(
+                path, 'is not a valid %s' % (' or '.join([t.__name__ for t in self._expected_types]))
+            )
         # If it is a model
         if hasattr(value, 'validate'):
             value.validate(path)
 
     def raise_validation_error(self, path: str, message: str) -> None:
         _message = message if self.message is None else self.message
-        raise ModelValidationException(f'{path} {_message}')
+        raise ModelValidationException('%s %s' % (path, _message))

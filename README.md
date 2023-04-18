@@ -1,3 +1,4 @@
+[![Python v3.8+](https://img.shields.io/badge/Python-v3.8%2B-blue)](https://www.python.org/downloads)
 [![Python tests](https://github.com/GabrielMartinMoran/pymodelio/actions/workflows/python.yml/badge.svg?branch=main)](https://github.com/GabrielMartinMoran/pymodelio/actions/workflows/python.yml)
 [![codecov](https://codecov.io/gh/GabrielMartinMoran/pymodelio/branch/main/graph/badge.svg?token=VVKW3GDMLD)](https://codecov.io/gh/GabrielMartinMoran/pymodelio)
 
@@ -17,31 +18,109 @@ restrictions.
 Installing the module is simple as running the following script on your terminal:
 
 ```shell
-pip install pymodelio
+pip install -U pymodelio
 ```
 
 ## How to use the module
 
 ### Declaring the models
 
-Models can be declared using the `pymodelio_model` decorator or by inheriting from `BaseModel`. In the example below,
-the decorator way it's used for not complicating the inheritance tree, but it would be the same if instead of using the
-decorator in each model, we just declare `Component` class as `class Component(BaseModel)`.
+Pymodelio models are declared by inheriting from `PymodelioModel` class. When instantiating a model, all _initable_
+declared attributes should be provided (if not, default generated from _default_factory_ builders will be used instead).
+
+**Let's begin with a simple example**
+
+```py
+from datetime import datetime
+from pymodelio import Attr, PymodelioModel
+
+class Person(PymodelioModel):
+    name: Attr(str)
+    created_at: Attr(datetime)
+    age: Attr(int)
+
+    def describe(self) -> str:
+        return f'{self.name} is {self.age} years old, and it was created on {self.created_at}'
+
+
+person = Person(name='Rick Sánchez', created_at=datetime.now(), age=70)
+
+print(person)
+# > Person(age=70, created_at=datetime(2023, 4, 18, 11, 46, 25, 978204, None), name='Rick Sánchez')
+
+print(person.describe())
+# > Rick Sánchez is 70 years old, and it was created on 2023-04-18 13:16:01.838463
+```
+*IMPORTANT NOTE:* Note that pymodelio attributes are defined by using Python type annotations, so we are not setting dafault values to static class attributes. Also, when you interact with these attibutes, the code autocompletion engine is going to autocomplete with the methods and properties of attribute type you specified as the first parameter of `Attr` (because on runtime you will be really working with that attribute type). For instance when interacting with `name` inside of the class, that prop will we considered as a `str`.
+
+**What about using models from other models?**
+
+```py
+from datetime import datetime
+from typing import Optional
+from pymodelio import Attr, PymodelioModel
+
+class Pet(PymodelioModel):
+    name: Attr(str)
+
+
+class Person(PymodelioModel):
+    name: Attr(str)
+    created_at: Attr(datetime)
+    age: Attr(int)
+    pet: Attr(Pet)
+
+
+person = Person(name='Morty Smith', created_at=datetime.now(), age=14, pet=Pet(name='Snuffles'))
+
+print(person)
+# > Person(age=14, created_at=datetime(2023, 4, 18, 12, 13, 0, 852099, None), name='Morty Smith',
+#       pet=Pet(name='Snuffles'))
+```
+
+**What about using a model within the same model?**
+
+For doing this, we need to use [forward references](https://peps.python.org/pep-0484/#forward-references) when using the `Person` model, because it was not yet initialized during the attribute declaration.
+
+```py
+from datetime import datetime
+from typing import Optional
+from pymodelio import Attr, PymodelioModel
+
+class Person(PymodelioModel):
+    name: Attr(str)
+    created_at: Attr(datetime)
+    age: Attr(int)
+    grandchild: Attr(Optional['Person'])
+
+
+person = Person(
+    name='Rick Sánchez', created_at=datetime.now(), age=70,
+    grandchild=Person(
+        name='Morty Smith', created_at=datetime.now(), age=14
+    )
+)
+
+print(person)
+# > Person(age=70, created_at=datetime(2023, 4, 18, 12, 14, 40, 841897, None), grandchild=Person(age=14,
+#       created_at=datetime(2023, 4, 18, 12, 14, 40, 841900, None), grandchild=None, name='Morty Smith'),
+#       name='Rick Sánchez')
+```
+
+**Let's continue with a more complex example?**
 
 ```py
 import uuid
 from typing import List
-
-import pymodelio
-from pymodelio import Attribute
+from pymodelio import Attr, PymodelioModel
 from pymodelio.validators import ListValidator, StringValidator
 from pymodelio.validators.int_validator import IntValidator
 from pymodelio.validators.validator import Validator
 
 
-@pymodelio.model
-class Component:
-    __serial_no: Attribute[str](
+
+class Component(PymodelioModel):
+    __serial_no: Attr(str,
         validator=StringValidator(fixed_len=36, regex=r'^[a-z0-9-]+$'),
         default_factory=lambda: uuid.uuid4().__str__()
     )
@@ -51,32 +130,28 @@ class Component:
         return self.__serial_no
 
 
-@pymodelio.model
 class CPU(Component):
-    _frequency: Attribute[int](validator=IntValidator(min_value=0))
-    cores: Attribute[int](validator=IntValidator(min_value=0))
+    _frequency: Attr(int, validator=IntValidator(min_value=0))
+    cores: Attr(int, validator=IntValidator(min_value=0))
 
     @property
     def frequency(self) -> int:
         return self._frequency
 
 
-@pymodelio.model
 class RAM(Component):
-    frequency: Attribute[int](validator=IntValidator(min_value=0))
-    size: Attribute[int](validator=IntValidator(min_value=0))
+    frequency: Attr(int, validator=IntValidator(min_value=0))
+    size: Attr(int, validator=IntValidator(min_value=0))
 
 
-@pymodelio.model
 class Disk(Component):
-    size: Attribute[int](validator=IntValidator(min_value=0))
+    size: Attr(int, validator=IntValidator(min_value=0))
 
 
-@pymodelio.model
 class Computer(Component):
-    _cpu: Attribute[CPU](validator=Validator(expected_type=CPU))
-    _rams: Attribute[List[RAM]](validator=ListValidator(elements_type=RAM, allow_empty=False))
-    _disks: Attribute[List[Disk]](validator=ListValidator(elements_type=Disk))
+    _cpu: Attr(CPU, validator=Validator(expected_type=CPU))
+    _rams: Attr(List[RAM], validator=ListValidator(elements_type=RAM, allow_empty=False))
+    _disks: Attr(List[Disk], validator=ListValidator(elements_type=Disk))
 
     @property
     def cpu(self) -> CPU:
@@ -89,13 +164,7 @@ class Computer(Component):
     @property
     def disks(self) -> List[Disk]:
         return self._disks
-```
 
-### Let's use these models
-
-You can do it by using the class constructors
-
-```py
 computer = Computer(
     serial_no='123e4567-e89b-12d3-a456-426614174000',
     cpu=CPU(frequency=3500, cores=8),
@@ -110,7 +179,7 @@ computer = Computer(
 )
 ```
 
-Or you can call `from_dict` factory constructor for instantiating the models by deserializing a python dictionary
+Also, instead of initializing a models using their constructors, we can deserialize them from python dictionaries by calling `from_dict` factory constructor.
 
 ```py
 computer = Computer.from_dict({
@@ -140,7 +209,7 @@ computer = Computer.from_dict({
 })
 ```
 
-### Wait a second, what is happening here?
+**Wait a second, what is happening here?**
 
 You probably noticed that in the example above, there are some protected and private attributes that are being set by
 providing their names without underscores.
@@ -217,30 +286,26 @@ Other thing that differentiates pymodelio from other modules that have a similar
 you have available a lot of already implementing validators that simplifies most cases like validating an email, the
 length of a string, the range of a number, the emptiness of a list, etc. Even if a validator is not already implemented,
 you can do it in a very easy way by inheriting from `Validator` class or using some exposed middleware model
-initialization methods. If you are interested on this, please scroll down until you find the *validation* section.
+initialization methods. If you are interested on this, please scroll down until you find the _validation_ section.
 
 ### Customizing the model's initialization workflow
 
 ```py
-@pymodelio_model
-class Model:
-    model_attr: Attribute[str]()
+class Model(PymodelioModel):
+    model_attr: Attr(str)
 
-    @classmethod
-    def __before_init__(cls, *args, **kwargs) -> None:
-        # This method is called before everything when the model constructor is called
+    def __before_init__(self, *args, **kwargs) -> None:
+        # This method is called before any other method when the model constructor is called
         # It receives the same parameters the constructor gets
         pass
 
-    @classmethod
-    def __before_validate__(cls) -> None:
+    def __before_validate__(self) -> None:
         # This method is called after initializing the model attributes but just before
-        # performing the model validations (it will be executed even if 
+        # performing the model validations (it will be executed even if
         # auto_validate = False)
         pass
 
-    @classmethod
-    def __once_validated__(cls) -> None:
+    def __once_validated__(self) -> None:
         # This method is called just after performing the model validations initializing
         # the model attributes but before performing the model validations (it will be
         # executed even if auto_validate = False)
@@ -250,9 +315,8 @@ class Model:
 ### Non initable attributes
 
 ```py
-@pymodelio_model
-class Model:
-    non_initable_model_attr: Attribute[str](initable=False, default_factory=lambda: 'Non initable default value')
+class Model(PymodelioModel):
+    non_initable_model_attr: Attr(str, initable=False, default_factory=lambda: 'Non initable default value')
 
 
 # WARNING: This will raise a NameError('non_initable_model_attr attribute is not
@@ -267,7 +331,7 @@ Model(non_initable_model_attr='custom value')
 When instantiating a model specifying `auto_validate = False`, the model won't be automatically validated during
 initialization.
 
-When a class attribute has the annotation `Attribute[<type>]`, it will be transformed into an instance attribute during
+When a class attribute has the annotation `Attr(<type>)`, it will be transformed into an instance attribute during
 the model initialization.
 
 When defining a protected or private model attribute with underscore or double underscore respectively, if that property
@@ -275,10 +339,9 @@ can be set by the model constructor, it's value will be obtained from an attribu
 underscores. For instance:
 
 ```py
-@pymodelio_model
-class Component:
-    __serial_no: Attribute[str]()
-    _model_name: Attribute[str]()
+class Component(PymodelioModel):
+    __serial_no: Attr(str)
+    _model_name: Attr(str)
 
     @property
     def serial_no(self) -> str:
@@ -295,6 +358,8 @@ print(component.serial_no)  # It will print '123e4567-e89b-12d3-a456-42661417400
 print(component.model_name)  # It will print 'ABC123'
 ```
 
+As we mentioned before, this default behavior can be disabled by configuring `PymodelioSettings`.
+
 ## Validation
 
 ### Customizing the validation process
@@ -306,7 +371,7 @@ called anyway).
 
 ```py
 def _when_validating_attr(self, internal_attr_name: str, exposed_attr_name: str, attr_value: Any, attr_path: str,
-                          parent_path: str, pymodel_attribute: Attribute) -> None:
+                          parent_path: str, attr: PymodelioAttr) -> None:
     pass
 ```
 
@@ -386,6 +451,24 @@ ListValidator(elements_type: Union[type, List[type]] = None, allow_empty: bool =
 Optional[str] = None)
 ```
 
+### SetValidator
+
+A subclass of IterableValidator specific for sets.
+
+```py
+SetValidator(elements_type: Union[type, List[type]] = None, allow_empty: bool = True, nullable: bool = False, message:
+Optional[str] = None)
+```
+
+### TupleValidator
+
+A subclass of IterableValidator specific for tuples.
+
+```py
+TupleValidator(elements_type: Union[type, List[type]] = None, allow_empty: bool = True, nullable: bool = False, message:
+Optional[str] = None)
+```
+
 ### EmailValidator
 
 ```py
@@ -396,6 +479,14 @@ EmailValidator(nullable: bool = False, message: Optional[str] = None)
 
 ```py
 BoolValidator(nullable: bool = False, message: Optional[str] = None)
+```
+
+### ForwardRefValidator
+
+A validator used for forwarded references (see `typing.ForwardRef` for more info in `typing` module documentation). The expected type of the validator is intended to be always a _PymodelioModel_ and it's obtained when validating the attribute the first time.
+
+```py
+ForwardRefValidator(ref: ForwardRef, nullable: bool = False, message: Optional[str] = None)
 ```
 
 ## Serialization and de-serialization
@@ -450,9 +541,8 @@ In case of properties (defined using the `property` decorator) that you don't wa
 `@do_not_serialize` decorator like this:
 
 ```py
-@pymodelio.model
-class Person:
-    _name: Attribute[str]()
+class Person(PymodelioModel):
+    _name: Attr(str)
 
     @property
     def name(self) -> str:
@@ -475,6 +565,34 @@ this method should be:
 @classmethod
 def from_dict(cls, data: dict, auto_validate: bool = True) -> CustomModel:
     return CustomModel(**data)  # Replace CustomModel with your model and call the constructor as you need
+```
+
+## Configuring Pymodelio settings
+
+As we mentioned before, there are some settings that can be configured by calling the `PymodelioSettings` class. These settigs and their expected types are:
+
+- **PymodelioSetting.INIT_PROTECTED_ATTRS_BY_DEFAULT** (`bool`): If `True`, all initable protected attributes will be exposed in the constructor on their public form. For instance: `_name` will be exposed as `name`.
+- **PymodelioSetting.INIT_PRIVATE_ATTRS_BY_DEFAULT** (`bool`): If `True`, all initable private attributes will be exposed in the constructor on their public form. For instance: `__id` will be exposed as `id`.
+- **PymodelioSetting.USE_CACHE_OPTIMIZATIONS** (`bool`): If `True`, pymodelio will use a cache for some performance tweaks. Disable it if you want to re-define model classes using the same under the same scope.
+- **PymodelioSetting.AUTO_PARSE_DATES_AS_UTC** (`bool`): If `True`, deserialized dates will be considered `UTC`.
+- **PymodelioSetting.USE_DEFAULT_ATTR_VALIDATOR_IF_NOT_DEFINED** (`bool`): If a validator is not provided when defining a model attribute (like `Attr(str)`) an automatically inferred validator will be used instead. If disabled, the attribute won't have any validator at all unless you manually specified one.
+
+Updating a setting it's as simple as doing:
+
+```py
+PymodelioSettings.set(PymodelioSetting.<setting_name>, <value>)
+```
+
+For getting the value of a setting, you can call:
+
+```py
+PymodelioSettings.get(PymodelioSetting.<setting_name>)
+```
+
+Settings can also be resseted by calling:
+
+```py
+PymodelioSettings.reset()
 ```
 
 ## Let's compare the same code using raw python against using pymodelio
@@ -547,19 +665,17 @@ pymodelio model validation errors also give more information about the full path
 including the index of the list element where the error occurred.
 
 ```py
-@pymodelio_model
-class PymodelioChildModel:
-    public_child_attr: Attribute[int](validator=IntValidator())
+class PymodelioChildModel(PymodelioModel):
+    public_child_attr: Attr(int)
 
 
-@pymodelio_model
-class PymodelioModel:
-    public_attr: Attribute[int](validator=IntValidator(min_value=0, max_value=10))
-    _protected_attr: Attribute[str](validator=StringValidator(fixed_len=5, regex='^[A-Z]+$'))  # Only capitalized chars
-    __private_attr: Attribute[datetime](validator=DatetimeValidator())
-    child_model_attr: Attribute[PymodelioChildModel](validator=Validator(expected_type=PymodelioChildModel))
-    children_model_attr: Attribute[List[PymodelioChildModel]](
-        validator=ListValidator(elements_type=PymodelioChildModel))
-    optional_attr: Attribute[dict](validator=DictValidator())
-    non_initable_attr: Attribute[List[str]](initable=False, default_factory=list)
+class PymodelioParentModel(PymodelioModel):
+    public_attr: Attr(int, validator=IntValidator(min_value=0, max_value=10))
+    _protected_attr: Attr(str, validator=StringValidator(fixed_len=5, regex='^[A-Z]+$'))  # Only capitalized chars
+    __private_attr: Attr(datetime)
+    child_model_attr: Attr(PymodelioChildModel)
+    children_model_attr: Attr(List[PymodelioChildModel])
+    optional_attr: Attr(dict, default_factory=dict)
+    non_initable_attr: Attr(List[str], initable=False, default_factory=list)
+
 ```

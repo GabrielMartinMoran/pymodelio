@@ -18,6 +18,6 @@ class NumericValidator(Validator):
         if value is None:
             return
         if self.min_value is not None and value < self.min_value:
-            self.raise_validation_error(path, f'is lower than {self.min_value}')
+            self.raise_validation_error(path, 'is less than %s' % self.min_value)
         if self.max_value is not None and value > self.max_value:
-            self.raise_validation_error(path, f'is greater than {self.max_value}')
+            self.raise_validation_error(path, 'is greater than %s' % self.max_value)

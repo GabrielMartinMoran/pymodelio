@@ -13,5 +13,8 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/GabrielMartinMoran/pymodelio',
-    packages=find_packages(include=['pymodelio', 'pymodelio.*'])
+    packages=find_packages(include=['pymodelio', 'pymodelio.*']),
+    install_requires=[
+        'ciso8601',
+    ],
 )
