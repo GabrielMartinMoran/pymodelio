@@ -1,14 +1,13 @@
 from datetime import datetime
 from typing import Any, Optional, List, Set, Tuple, Dict, Union
-from unittest.mock import patch
 
 import pytest
 
-from pymodelio import PymodelioModel, PymodelioSettings, PymodelioSetting, shared_vars
+from pymodelio import PymodelioModel, PymodelioSettings, PymodelioSetting
 from pymodelio.attribute import Attr, PymodelioAttr
 from pymodelio.constants import UNDEFINED
+from pymodelio.decorators.deserializes import deserializes
 from pymodelio.exceptions.model_validation_exception import ModelValidationException
-from pymodelio.pymodelio_cache import PymodelioCache
 from tests.test_models.computer import Computer
 
 
@@ -70,7 +69,7 @@ def test_invalid_submodel_as_child():
     }
     with pytest.raises(ModelValidationException) as ex_info:
         Computer.deserialize_from_dict(data)
-    assert ex_info.value.args[0] == 'Computer.cpu.frequency is not instance of int'
+    assert ex_info.value.args[0] == 'Computer._cpu._frequency is not instance of int'
 
 
 def test_invalid_submodel_in_list_as_child():
@@ -101,7 +100,7 @@ def test_invalid_submodel_in_list_as_child():
     }
     with pytest.raises(ModelValidationException) as ex_info:
         Computer.deserialize_from_dict(data)
-    assert ex_info.value.args[0] == 'Computer.disks[1].size is not instance of int'
+    assert ex_info.value.args[0] == 'Computer._disks[1].size is not instance of int'
 
 
 def test_can_not_init_non_initable_model_attributes():
@@ -121,10 +120,10 @@ def test_model_init_uses_default_factory_value_when_provided_value_is_UNDEFINED(
     assert model.model_attr == 12345
 
 
-def test_model_initialization_sets_protected_attributes():
+def test_model_initialization_sets_protected_attributes_when_init_by_public_alias_is_true():
     class Model(PymodelioModel):
-        _protected_attr_1: Attr(int)
-        _protected_attr_2_: Attr(str)
+        _protected_attr_1: Attr(int, init_by_public_alias=True)
+        _protected_attr_2_: Attr(str, init_by_public_alias=True)
 
         @property
         def protected_attr_1(self) -> int:
@@ -139,17 +138,17 @@ def test_model_initialization_sets_protected_attributes():
     assert instance_1.protected_attr_2 == 'asd'
 
 
-def test_model_initialization_sets_private_attributes():
+def test_model_initialization_sets_private_attributes_when_init_by_public_alias_is_true():
     class Model(PymodelioModel):
-        __private_attr_1: Attr(int)
+        __private_attr_1: Attr(int, init_by_public_alias=True)
 
         @property
         def private_attr_1(self) -> int:
             return self.__private_attr_1
 
     class ChildModel(Model):
-        __private_attr_2: Attr(str)
-        __private_attr_3__: Attr(float)
+        __private_attr_2: Attr(str, init_by_public_alias=True)
+        __private_attr_3__: Attr(float, init_by_public_alias=True)
 
         @property
         def private_attr_2(self) -> str:
@@ -174,9 +173,9 @@ def test_model_calls_when_validating_attr_method_when_performing_attribute_valid
         model_attr: Attr(str)
 
         @classmethod
-        def _when_validating_attr(cls, internal_attr_name: str, exposed_attr_name: str, attr_value: Any,
-                                  attr_path: str, parent_path: str, attr: PymodelioAttr) -> None:
-            if exposed_attr_name == 'model_attr' and attr_value != 'Hello world':
+        def _when_validating_attr(cls, attr_name: str, attr_value: Any, attr_path: str, parent_path: str,
+                                  attr: PymodelioAttr) -> None:
+            if attr_name == 'model_attr' and attr_value != 'Hello world':
                 raise ModelValidationException(f'{attr_path} does not match "Hello world"')
 
     with pytest.raises(ModelValidationException) as ex_info:
@@ -205,40 +204,30 @@ def test_auto_instantiate_attribute_when_not_instantiated_manually():
 
 
 def test_protected_attributes_are_not_automatically_instantiated_when_settings_prevent_that_behaviour():
+    PymodelioSettings.set(PymodelioSetting.INIT_PROTECTED_ATTRS_BY_DEFAULT, False)
+
     class TestCaseModel(PymodelioModel):
         _name: Attr(str, default_factory=lambda: 'Default factory value')
         __id: Attr(str, default_factory=lambda: 'Default id')
 
-    PymodelioSettings.set(PymodelioSetting.INIT_PROTECTED_ATTRS_BY_DEFAULT, False)
+    instance = TestCaseModel(name='Initialized value', id='12345')
+    assert instance._name == 'Default factory value'
 
-    with pytest.raises(NameError) as ex_info:
-        TestCaseModel(name='Initialized value', id='12345')
-    try:
-        assert ex_info.value.args[0] == '_name attribute is not initable for class TestCaseModel'
-    except AssertionError as e:
-        raise e
-    finally:
-        # To always reset the settings
-        PymodelioSettings.reset()
+    PymodelioSettings.reset()
 
 
 def test_private_attributes_are_not_automatically_instantiated_when_settings_prevent_that_behaviour():
+    PymodelioSettings.set(PymodelioSetting.INIT_PRIVATE_ATTRS_BY_DEFAULT, False)
+
     class TestCaseModel(PymodelioModel):
         _name: Attr(str, default_factory=lambda: 'Default factory value')
         __id: Attr(str, default_factory=lambda: 'Default id')
 
-    PymodelioSettings.set(PymodelioSetting.INIT_PRIVATE_ATTRS_BY_DEFAULT, False)
+    instance = TestCaseModel(name='Initialized value', id='12345')
 
-    with pytest.raises(NameError) as ex_info:
-        TestCaseModel(name='Initialized value', id='12345')
+    assert instance._TestCaseModel__id == 'Default id'
 
-    try:
-        assert ex_info.value.args[0] == '_TestCaseModel__id attribute is not initable for class TestCaseModel'
-    except AssertionError as e:
-        raise e
-    finally:
-        # To always reset the settings
-        PymodelioSettings.reset()
+    PymodelioSettings.reset()
 
 
 def test_default_validator_is_used_when_no_validator_is_defined():
@@ -368,9 +357,6 @@ def test_default_validator_is_used_when_no_validator_is_defined():
         for valid_example in valid_examples:
             TestCaseModel(attr=valid_example)
 
-        # Reset the cache because we are re-using the same class
-        PymodelioCache.reset()
-
 
 def test_repr_returns_a_str_representation_of_the_model():
     class Person(PymodelioModel):
@@ -398,3 +384,70 @@ def test_attr_default_value_is_set_when_attr_is_not_initable():
 
     instance = TestCaseModel()
     assert instance.attr == 'TEST'
+
+
+def test_deserializes_decorator_adds_custom_deserialization_logic_to_an_attr():
+    class TestCaseModel(PymodelioModel):
+        _attr_1: Attr(str, init_by_public_alias=True)
+        attr_2: Attr(str, init_alias='$attr_2')
+        __attr_3: Attr(str, init_aliases=['_attr_3'])
+
+        @deserializes('attr_1')
+        def deserialize_attr_1(self, value: str) -> str:
+            return value.lower()
+
+        @deserializes(['$attr_2', '_attr_3'])
+        def deserialize_attr_2_and_attr_3(self, value: str) -> str:
+            return value.lower()
+
+    instance = TestCaseModel.from_dict({'attr_1': 'TEST', '$attr_2': 'TEST', '_attr_3': 'TEST'})
+    assert instance._attr_1 == 'test'
+    assert instance.attr_2 == 'test'
+    assert instance._TestCaseModel__attr_3 == 'test'
+
+
+def test_initialize_aliased_attributes_with_one_alias():
+    class TestCaseModel(PymodelioModel):
+        public_attr: Attr(str, init_alias='public_attr_alias')
+        _protected_attr: Attr(str, init_alias='protected_attr_alias')
+        __private_attr: Attr(str, init_alias='private_attr_alias')
+
+    instance = TestCaseModel.from_dict(
+        {'public_attr_alias': '1', 'protected_attr_alias': '2', 'private_attr_alias': '3'})
+    assert instance.public_attr == '1'
+    assert instance._protected_attr == '2'
+    assert instance._TestCaseModel__private_attr == '3'
+
+    instance = TestCaseModel(public_attr_alias='1', protected_attr_alias='2', private_attr_alias='3')
+    assert instance.public_attr == '1'
+    assert instance._protected_attr == '2'
+    assert instance._TestCaseModel__private_attr == '3'
+
+
+def test_initialize_aliased_attributes_with_multiple_aliases():
+    class TestCaseModel(PymodelioModel):
+        public_attr: Attr(str, init_aliases=['public_attr_alias_1', 'public_attr_alias_2'])
+        _protected_attr: Attr(str, init_aliases=['protected_attr_alias_1', 'protected_attr_alias_2'])
+        __private_attr: Attr(str, init_aliases=['private_attr_alias_1', 'private_attr_alias_2'])
+
+    instance = TestCaseModel.from_dict(
+        {'public_attr_alias_1': '1', 'protected_attr_alias_1': '2', 'private_attr_alias_1': '3'})
+    assert instance.public_attr == '1'
+    assert instance._protected_attr == '2'
+    assert instance._TestCaseModel__private_attr == '3'
+
+    instance = TestCaseModel(public_attr_alias_1='1', protected_attr_alias_1='2', private_attr_alias_1='3')
+    assert instance.public_attr == '1'
+    assert instance._protected_attr == '2'
+    assert instance._TestCaseModel__private_attr == '3'
+
+    instance = TestCaseModel.from_dict(
+        {'public_attr_alias_2': '1', 'protected_attr_alias_2': '2', 'private_attr_alias_2': '3'})
+    assert instance.public_attr == '1'
+    assert instance._protected_attr == '2'
+    assert instance._TestCaseModel__private_attr == '3'
+
+    instance = TestCaseModel(public_attr_alias_2='1', protected_attr_alias_2='2', private_attr_alias_2='3')
+    assert instance.public_attr == '1'
+    assert instance._protected_attr == '2'
+    assert instance._TestCaseModel__private_attr == '3'
