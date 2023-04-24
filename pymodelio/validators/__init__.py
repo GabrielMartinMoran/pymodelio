@@ -1,6 +1,7 @@
 # flake8: noqa
 from .validator import Validator
 from .bool_validator import BoolValidator
+from .date_validator import DateValidator
 from .datetime_validator import DatetimeValidator
 from .dict_validator import DictValidator
 from .string_validator import StringValidator

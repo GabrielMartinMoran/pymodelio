@@ -16,11 +16,11 @@ class IterableValidator(Validator):
         if value is None:
             return
         if len(value) == 0 and not self.allow_empty:
-            self.raise_validation_error(path, 'must not be empty')
+            self._raise_validation_error(path, 'must not be empty')
         for i, x in enumerate(value):
             sub_path = '%s[%s]' % (path, i)
             if self.elements_type != (None,) and not isinstance(x, self.elements_type):
-                self.raise_validation_error(
+                self._raise_validation_error(
                     sub_path, 'is not instance of %s' % (' or '.join([t.__name__ for t in self.elements_type]))
                 )
             # If it is a model

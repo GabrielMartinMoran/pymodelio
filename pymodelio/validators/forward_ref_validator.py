@@ -5,6 +5,7 @@ from pymodelio.validators import Validator
 
 
 class ForwardRefValidator(Validator):
+    __slots__ = Validator.__slots__ + ('_ref',)
 
     def __init__(self, ref: ForwardRef, nullable: bool = False, message: Optional[str] = None) -> None:
         self._ref = ref

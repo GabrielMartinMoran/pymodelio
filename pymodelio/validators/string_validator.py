@@ -19,10 +19,10 @@ class StringValidator(Validator):
         if value is None:
             return
         if self.min_len is not None and len(value) < self.min_len:
-            self.raise_validation_error(path, 'is shorter than %s' % self.min_len)
+            self._raise_validation_error(path, 'is shorter than %s' % self.min_len)
         if self.max_len is not None and len(value) > self.max_len:
-            self.raise_validation_error(path, 'is longer than %s' % self.max_len)
+            self._raise_validation_error(path, 'is longer than %s' % self.max_len)
         if self.fixed_len is not None and len(value) != self.fixed_len:
-            self.raise_validation_error(path, 'length is different than %s' % self.fixed_len)
+            self._raise_validation_error(path, 'length is different than %s' % self.fixed_len)
         if self.regex is not None and re.compile(self.regex).match(value) is None:
-            self.raise_validation_error(path, 'does not match configured regex')
+            self._raise_validation_error(path, 'does not match configured regex')

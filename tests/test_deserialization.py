@@ -1,8 +1,8 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 from typing import List, Union
 from unittest.mock import patch
 
-from pymodelio import PymodelioModel, Attr, UNDEFINED
+from pymodelio import PymodelioModel, Attr, UNDEFINED, PymodelioSettings, PymodelioSetting
 from tests.test_models.computer import Computer
 
 
@@ -38,11 +38,27 @@ def test_from_dict_deserializes_the_model(*args):
 
 
 def test_from_dict_deserializes_datetimes_from_string(*args):
+    PymodelioSettings.set(PymodelioSetting.AUTO_PARSE_DATES_AS_UTC, True)
+
     class TestCaseModel(PymodelioModel):
         dt: Attr(datetime)
 
     instance = TestCaseModel.from_dict({'dt': '2023-04-15T10:37:10.567892'})
-    assert instance.dt == datetime(2023, 4, 15, 10, 37, 10, 567892, tzinfo=timezone.utc)
+    try:
+        assert instance.dt == datetime(2023, 4, 15, 10, 37, 10, 567892, tzinfo=timezone.utc)
+    except Exception as e:
+        raise e
+    finally:
+        PymodelioSettings.reset()
+
+
+def test_from_dict_deserializes_dates_from_string(*args):
+    class TestCaseModel(PymodelioModel):
+        attr: Attr(date)
+
+    instance = TestCaseModel.from_dict({'attr': '2023-04-24'})
+
+    assert instance.attr == date(2023, 4, 24)
 
 
 def test_from_dict_sets_attr_by_factory_default_when_value_is_undefined():

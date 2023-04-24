@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Any, TypeVar, Union
+from typing import Callable, Optional, Any, TypeVar, Union, Tuple, Iterable
 
 from pymodelio import UNDEFINED, PymodelioSettings, PymodelioSetting
 from pymodelio.undefined import Undefined
@@ -9,12 +9,26 @@ T = TypeVar('T')
 
 
 class PymodelioAttr:
+    __slots__ = (
+        '_attr_type', '_initable', '_default_factory', '_init_aliases', '_validator'
+    )
+
     def __init__(self, attr_type: T, validator: Optional[Validator] = UNDEFINED, initable: bool = True,
+                 init_alias: Optional[str] = None, init_aliases: Optional[Iterable[str]] = None,
                  default_factory: Callable = None) -> None:
         self._attr_type = attr_type
-        self._initable = initable
-        self._default_factory = default_factory or (lambda: None)
+        self._init_attr_aliases(init_alias, init_aliases)
+        self._initable = initable or len(self._init_aliases) > 0
+        self._default_factory = default_factory if default_factory is not None else (lambda: None)
         self._init_validator(validator)
+
+    def _init_attr_aliases(self, init_alias: Optional[str], init_aliases: Optional[Iterable[str]]) -> None:
+        if init_aliases is not None:
+            self._init_aliases = tuple(init_aliases)
+        elif init_alias is not None:
+            self._init_aliases = (init_alias,)
+        else:
+            self._init_aliases = tuple()
 
     def _init_validator(self, validator: Union[Validator, None, Undefined]) -> None:
         if validator == UNDEFINED:
@@ -45,8 +59,12 @@ class PymodelioAttr:
     def attr_type(self) -> T:
         return self._attr_type
 
+    @property
+    def init_aliases(self) -> Tuple[str]:
+        return self._init_aliases
 
-def Attr(attr_type: T, validator: Optional[Validator] = UNDEFINED, initable: bool = True,
-         default_factory: Callable = None) -> T:
-    return PymodelioAttr(attr_type=attr_type, validator=validator, initable=initable,
-                         default_factory=default_factory)
+
+def Attr(attr_type: T, /, *, validator: Optional[Validator] = UNDEFINED, initable: bool = True,
+         init_alias: Optional[str] = None, init_aliases: Iterable[str] = None, default_factory: Callable = None) -> T:
+    return PymodelioAttr(attr_type=attr_type, validator=validator, initable=initable, init_alias=init_alias,
+                         init_aliases=init_aliases, default_factory=default_factory)

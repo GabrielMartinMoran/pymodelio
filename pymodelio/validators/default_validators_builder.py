@@ -1,16 +1,20 @@
 import typing
-from dataclasses import dataclass, field
-from datetime import datetime
+from collections import namedtuple
+from datetime import datetime, date
 from typing import Optional, _SpecialForm
 
 from pymodelio.exceptions import AutoValidatorCreationException
 from pymodelio.validators import Validator, StringValidator, FloatValidator, IntValidator, BoolValidator, \
     DictValidator, ListValidator, DatetimeValidator, SetValidator, TupleValidator
+from pymodelio.validators.date_validator import DateValidator
 from pymodelio.validators.forward_ref_validator import ForwardRefValidator
 
+# We use namedtuple for performance
+_DestructuredType = namedtuple('_DestructuredType', 'outer outer_nullable inners')
 
-def _generate_validators_mapping() -> dict:
-    return {
+
+class DefaultValidatorsBuilder:
+    _VALIDATORS_MAPPING = {
         str: StringValidator,
         bool: BoolValidator,
         int: IntValidator,
@@ -19,6 +23,7 @@ def _generate_validators_mapping() -> dict:
         list: ListValidator,
         set: SetValidator,
         tuple: TupleValidator,
+        date: DateValidator,
         datetime: DatetimeValidator,
         typing.Dict: DictValidator,
         typing.List: ListValidator,
@@ -26,20 +31,6 @@ def _generate_validators_mapping() -> dict:
         typing.Set: SetValidator,
         typing.Any: Validator
     }
-
-
-@dataclass
-class _DestructuredType:
-    outer: typing.Union[type, _SpecialForm]
-    outer_nullable: bool = field(default_factory=lambda: False)
-    inners: typing.List['_DestructuredType'] = field(default_factory=list)
-
-    def is_plain(self) -> bool:
-        return len(self.inners) == 0
-
-
-class DefaultValidatorsBuilder:
-    _VALIDATORS_MAPPING = _generate_validators_mapping()
 
     @classmethod
     def build(cls, attr_type: type) -> Optional[Validator]:
@@ -49,20 +40,21 @@ class DefaultValidatorsBuilder:
     @classmethod
     def _destructurate(cls, attr_type: type) -> _DestructuredType:  # noqa: C901
         if attr_type in cls._VALIDATORS_MAPPING or (
-                hasattr(attr_type, '_is_pymodelio_model') and attr_type._is_pymodelio_model()):
-            return _DestructuredType(outer=attr_type)
+                hasattr(attr_type, '__is_pymodelio_model__') and attr_type.__is_pymodelio_model__):
+            return _DestructuredType(outer=attr_type, outer_nullable=False, inners=[])
         if attr_type == typing.Any:
-            return _DestructuredType(outer=typing.Any)
+            return _DestructuredType(outer=typing.Any, outer_nullable=False, inners=[])
         # typing.ForwardRef
         if isinstance(attr_type, typing.ForwardRef):
-            return _DestructuredType(outer=typing.ForwardRef, inners=[attr_type])
+            return _DestructuredType(outer=typing.ForwardRef, outer_nullable=False, inners=[attr_type])
         if isinstance(attr_type, str):
-            return _DestructuredType(outer=typing.ForwardRef, inners=[typing.ForwardRef(attr_type)])
+            return _DestructuredType(outer=typing.ForwardRef, outer_nullable=False,
+                                     inners=[typing.ForwardRef(attr_type)])
         # other typings
         if attr_type.__module__ == 'typing' and hasattr(attr_type, '__reduce__'):
             reduced = attr_type.__reduce__()[1]
             if len(reduced) == 1:
-                return _DestructuredType(outer=reduced[0])
+                return _DestructuredType(outer=reduced[0], outer_nullable=False, inners=[])
             _type, args = reduced
             if _type == typing.Union:
                 # Optional
@@ -83,12 +75,12 @@ class DefaultValidatorsBuilder:
             if _type in (typing.List, typing.Tuple, typing.Set):
                 return _DestructuredType(outer=_type, outer_nullable=True, inners=[cls._destructurate(args)])
             if _type == typing.Dict:
-                return _DestructuredType(outer=dict)
-        return _DestructuredType(outer=attr_type)
+                return _DestructuredType(outer=dict, outer_nullable=False, inners=[])
+        return _DestructuredType(outer=attr_type, outer_nullable=False, inners=[])
 
     @classmethod
     def _instantiate_from_destructured(cls, destructured: _DestructuredType, nullable: bool = False) -> Validator:
-        if destructured.is_plain():
+        if len(destructured.inners) == 0:
             return cls._instantiate_validator(destructured.outer, nullable)
         if destructured.outer == typing.ForwardRef:
             return ForwardRefValidator(ref=destructured.inners[0], nullable=nullable)

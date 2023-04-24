@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional, List, Set, Tuple, Any, Dict, Union, ForwardRef
 
 import pytest
@@ -7,6 +7,7 @@ from pymodelio import PymodelioModel, Attr
 from pymodelio.exceptions import AutoValidatorCreationException
 from pymodelio.validators import StringValidator, BoolValidator, IntValidator, FloatValidator, DictValidator, \
     ListValidator, SetValidator, TupleValidator, DatetimeValidator, Validator, ForwardRefValidator
+from pymodelio.validators.date_validator import DateValidator
 from pymodelio.validators.default_validators_builder import DefaultValidatorsBuilder
 
 
@@ -26,6 +27,7 @@ def test_build_generates_validator_for_provided_type_if_that_type_is_configured(
         list: ListValidator,
         set: SetValidator,
         tuple: TupleValidator,
+        date: DateValidator,
         datetime: DatetimeValidator,
         Dict: DictValidator,
         Any: Validator,
@@ -92,7 +94,8 @@ def test_build_generates_validator_for_provided_type_if_that_type_is_configured(
     assert not validator.nullable
     #   After validation, the forwarded reference is corrected
     validator.validate(TestPymodelioModel(name='name'))
-    assert validator._expected_types == (TestPymodelioModel,)
+    assert len(validator._expected_types) == 1
+    assert validator._expected_types[0].__name__ == 'TestPymodelioModel'
 
     # Non pymodelio classes
     validator = DefaultValidatorsBuilder.build(NonPymodelioClass)

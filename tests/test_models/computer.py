@@ -10,10 +10,12 @@ from pymodelio.validators.validator import Validator
 
 
 class Component(PymodelioModel):
-    __serial_no: Attr(str,
-                      validator=StringValidator(fixed_len=36, regex=r'^[a-z0-9-]+$'),
-                      default_factory=lambda: uuid.uuid4().__str__()
-                      )
+    __serial_no: Attr(
+        str,
+        validator=StringValidator(fixed_len=36, regex=r'^[a-z0-9-]+$'),
+        default_factory=lambda: uuid.uuid4().__str__(),
+        init_alias='serial_no'
+    )
 
     @property
     def serial_no(self) -> str:
@@ -21,7 +23,7 @@ class Component(PymodelioModel):
 
 
 class CPU(Component):
-    _frequency: Attr(int, validator=IntValidator(min_value=0))
+    _frequency: Attr(int, validator=IntValidator(min_value=0), init_alias='frequency')
     cores: Attr(int, validator=IntValidator(min_value=0))
 
     @property
@@ -62,9 +64,9 @@ class Disk(Component):
 
 
 class Computer(Component):
-    _cpu: Attr(CPU, validator=Validator(expected_type=CPU))
-    _rams: Attr(List[RAM], validator=ListValidator(elements_type=RAM, allow_empty=False))
-    _disks: Attr(List[Disk], validator=ListValidator(elements_type=Disk))
+    _cpu: Attr(CPU, validator=Validator(expected_type=CPU), init_alias='cpu')
+    _rams: Attr(List[RAM], validator=ListValidator(elements_type=RAM, allow_empty=False), init_alias='rams')
+    _disks: Attr(List[Disk], validator=ListValidator(elements_type=Disk), init_alias='disks')
 
     @property
     def cpu(self) -> CPU:

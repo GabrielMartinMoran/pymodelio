@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from typing import Any
 
 
@@ -12,6 +12,8 @@ class ModelSerializer:
             return [cls.serialize(x) for x in value]
         if isinstance(value, datetime):
             return value.isoformat()
+        if isinstance(value, date):
+            return value.strftime('%Y-%m-%d')
         return value
 
     @classmethod
@@ -23,4 +25,4 @@ class ModelSerializer:
 
     @classmethod
     def _is_model(cls, attr_value: Any) -> bool:
-        return hasattr(attr_value, '_is_pymodelio_model') and getattr(attr_value, '_is_pymodelio_model')()
+        return hasattr(attr_value, '__is_pymodelio_model__') and attr_value.__is_pymodelio_model__

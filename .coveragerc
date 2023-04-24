@@ -1,6 +1,7 @@
 [run]
 omit=
     tests/*
+    examples/*
     env/*
     venv/*
     */__init__.py
