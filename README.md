@@ -13,7 +13,7 @@ an external api, without needing to also define serializers and deserializers fo
 Well, that's what `pymodelio` is built for, simplicity when defining your domain models and the surrounding
 restrictions.
 
-# How to install the module
+# Installation
 
 Installing the module is simple as running the following script on your terminal:initable_ainitable_as_public_aliass_public_alias
 
@@ -23,6 +23,14 @@ pip install -U pymodelio
 
 # How can I use this module?
 
+## Table of contents
+
+- [Declaring the models](#declaring-the-models)
+- [Attribute's validation](#attributes-validation)
+- [Serialization and deserialization](#serialization-and-deserialization)
+- [Configuring pymodelio settings](#configuring-pymodelio-settings)
+- [Comparing pymodelio with other options](#comparing-pymodelio-with-other-options)
+
 ## Declaring the models
 
 Pymodelio models are declared by inheriting from `PymodelioModel` class. When instantiating a model, all _initable_
@@ -30,7 +38,7 @@ declared attributes should be provided (if not, default generated from _default_
 
 ### Let's begin with a simple example
 
-**Example 1:**
+**Example 1 - Creating our first pymodelio's model**
 
 ```py
 from datetime import datetime
@@ -58,7 +66,7 @@ _IMPORTANT NOTE:_ Note that pymodelio attributes are defined by using Python typ
 
 ### What about using models from other models?
 
-**Example 2**
+**Example 2 - Using nested models**
 
 ```py
 from datetime import datetime
@@ -86,7 +94,7 @@ print(person)
 
 For doing this, we need to use [forward references](https://peps.python.org/pep-0484/#forward-references) when using the `Person` model, because it was not yet initialized during the attribute declaration.
 
-**Example 3**
+**Example 3 - Using the same model as a nested one**
 
 ```py
 from datetime import datetime
@@ -126,7 +134,7 @@ It's important to know that these aliases are only for populating the model from
 
 Let's see some examples of this:
 
-**Example 4 - Giving an initialization alias to an attribute:**
+**Example 4 - Giving an initialization alias to an attribute**
 
 ```py
 from pymodelio import Attr, PymodelioModel
@@ -152,7 +160,7 @@ print(person)
 # > Person(id='0001', name='Rick Sánchez', occupation='Scientist')
 ```
 
-**Example 5 - Giving multiple initialization aliases to an attribute:**
+**Example 5 - Giving multiple initialization aliases to an attribute**
 
 ```py
 from pymodelio import Attr, PymodelioModel
@@ -211,7 +219,7 @@ But caution, only these types can be automatically inferred by pymodelio:
 
 Ok, so let's continue with the example...
 
-**Example 6:**
+**Example 6 - A more complex example**
 
 ```py
 import uuid
@@ -311,7 +319,7 @@ Well, this depends on how you configured the attribute.
 
 If you didn't specify any special logic for default values, the default `default_factory` method of the attribute will be called, returning a `None` as we can see in this example:
 
-**Example 7:**
+**Example 7 - Initializing an attribute without providing a value**
 
 ```py
 from typing import Optional
@@ -333,7 +341,7 @@ In this example, we typed `name` as `Optional[str]` for not getting a validation
 
 But if we pass a custom `default_factory` parameter to the attribute that retuns a string, we don't need to make it nullable, like this:
 
-**Example 8:**
+**Example 8 - Custom default factory**
 
 ```py
 from pymodelio import Attr, PymodelioModel
@@ -355,7 +363,7 @@ What if we don't want to allow an attribute initialization at all? Well, for tha
 
 But be aware that if you provide any of the parameters `init_alias` or `init_aliases` to the `Attr` function, the value of `initable` will be ignored.
 
-**Example 9 - Non-initable attribute:**
+**Example 9 - Non-initable attributes**
 
 ```py
 import uuid
@@ -465,7 +473,7 @@ Now that we know this, let's see some example of how to inject custom data into 
 
 In this first example, we are hashing a password only if we received a plain password when the model is initialized.
 
-**Example 11 - Customizing the initialization workflow using `__before_init__`**
+**Example 11 - Customizing the initialization workflow by using `__before_init__`**
 
 ```py
 import hashlib
@@ -506,7 +514,7 @@ print(person)
 
 How can we solve the same problem, but now using `__before_validate__`?
 
-**Example 12 - Customizing the initialization workflow using `__before_validate__`**
+**Example 12 - Customizing the initialization workflow by using `__before_validate__`**
 
 ```py
 import hashlib
@@ -829,6 +837,10 @@ except ModelValidationException as e:
     # > CustomModel.age must not be less than zero
 ```
 
+### Force model validations
+
+Pymodelio doesn't validate an attribute each time it is updated, because we don't think that's required in most cases. Instead of this, all pymodelio model have a method called `validate`. You can call this method any time you want to validate your model.
+
 ## Serialization and deserialization
 
 We have mentioned someting about serialization and deserialization across this document, but let's see in depth how it works.
@@ -913,7 +925,7 @@ print(serialized)
 
 If you want to customize the serialization process of your models, you can override the `to_dict` method.
 
-**Example 19 - Implementing a custom model's serializer**
+**Example 19 - Implementing a custom model serializer**
 
 ```py
 from pymodelio import Attr, PymodelioModel
@@ -961,12 +973,14 @@ Settings can also be resseted by calling:
 PymodelioSettings.reset()
 ```
 
-## Let's compare the same code using raw python against using pymodelio
+## Comparing pymodelio with other options
+
+### Let's compare the same code using raw python against using pymodelio
 
 For this comparison, we are not implementing serialization and de-serialization in the raw Python models (pymodelio
 handles this automatically for its models).
 
-### Using raw python
+**Using raw python**
 
 ```py
 class RawPythonChildModel:
@@ -1025,7 +1039,7 @@ class RawPythonModel:
         assert isinstance(self.optional_attr, dict), 'optional_attr is not instance of dict'
 ```
 
-### Using pymodelio
+**Using pymodelio**
 
 pymodelio model validation errors also give more information about the full path of nested structures. In case of lists,
 including the index of the list element where the error occurred.
@@ -1045,3 +1059,305 @@ class PymodelioParentModel(PymodelioModel):
     non_initable_attr: Attr(List[str], initable=False, default_factory=list)
 
 ```
+
+### What about comparing attrs, pydantic and pymodelio?
+
+On early releases of this module, most of people wanted like to know why choosing pymodelio over attrs or pydantic. Apart of some unique use cases that pymodelio simplifies a lot (as we described in this documentation), we created a benchmark (that you can run) for comparing these libraries.
+
+For running this benchmark, `attrs`, `pydantic` and `pymodelio` must be installed in your working environment.
+
+In this benchmark, we are comparing:
+
+- The time each library takes for deserializing a model from a dictionary (including the validation run during initialization)
+- The time each library takes for serializing a model into a dictionary
+- The time each library takes for reading and writting model attributes
+- The time each library takes for deserializing a model from invalid data (that results in validation errors)
+- Total time of this process
+
+**Give me that benchmark!**
+
+```py
+import random
+import time
+from dataclasses import dataclass
+from datetime import datetime
+from typing import List, Tuple, Callable, Any, Optional
+from uuid import uuid4
+
+import attrs
+from attrs import asdict, define, field
+from pydantic import BaseModel
+from pymodelio import Attr, PymodelioModel
+
+NUM_PARENTS = 100
+NUM_CHILDREN_PER_PARENT = 1000
+
+
+# Pydantic models
+class PydanticChild(BaseModel):
+    identifier: str
+    created_at: int
+    updated_at: Optional[int]
+    data: dict
+
+
+class PydanticParent(BaseModel):
+    identifier: str
+    created_at: int
+    updated_at: Optional[int]
+    children: List[PydanticChild]
+
+
+# Pymodelio models
+class PymodelioChild(PymodelioModel):
+    identifier: Attr(str)
+    created_at: Attr(int)
+    updated_at: Attr(Optional[int])
+    data: Attr(dict)
+
+
+class PymodelioParent(PymodelioModel):
+    identifier: Attr(str)
+    created_at: Attr(int)
+    updated_at: Attr(Optional[int])
+    children: Attr(List[PymodelioChild])
+
+
+# Attrs models
+@define
+class AttrsChild:
+    identifier: str = field(validator=[attrs.validators.instance_of(str)])
+    created_at: int = field(validator=[attrs.validators.instance_of(int)])
+    data: dict = field(validator=[attrs.validators.instance_of(dict)])
+    updated_at: Optional[int] = None
+
+
+def _validate_children(instance, attribute, value: Any) -> None:
+    for x in value:
+        assert isinstance(x, AttrsChild), 'Invalid child'
+
+
+def _convert_to_attrs_children(records):
+    return [AttrsChild(**record) for record in records]
+
+
+@define
+class AttrsParent:
+    identifier: str = field(validator=[attrs.validators.instance_of(str)])
+    created_at: int = field(validator=[attrs.validators.instance_of(int)])
+    children: List[AttrsChild] = field(converter=_convert_to_attrs_children,
+                                       validator=[attrs.validators.instance_of(list), _validate_children])
+    updated_at: Optional[int] = None
+
+
+@dataclass
+class TimeResults:
+    name: str
+    deserialization: float = 0.0
+    serialization: float = 0.0
+    valid_data_processing: float = 0.0
+    invalid_data_processing: float = 0.0
+    attributes_updating: float = 0.0
+    total: float = 0.0
+
+    def __repr__(self) -> str:
+        return f'Total {self.total} seconds:\n' \
+               f'  > Valid data processing (total {self.valid_data_processing} seconds)\n' \
+               f'     - Deserialization {self.deserialization} seconds\n' \
+               f'     - Serialization {self.serialization} seconds\n' \
+               f'  > Attributes updating (total {self.valid_data_processing} seconds)\n' \
+               f'  > Invalid data processing (total {self.invalid_data_processing} seconds)\n'
+
+
+def generate_valid_data() -> List[dict]:
+    parents = []
+    for x in range(NUM_PARENTS):
+        children = []
+        for y in range(NUM_CHILDREN_PER_PARENT):
+            children.append({
+                'identifier': str(uuid4()),
+                'created_at': int(datetime.now().timestamp()),
+                'data': {
+                    f'{random.randint(100, 999)}_sample': random.randint(100_000, 999_999)
+                    for x in range(random.randint(1, 5))
+                }
+            })
+        parent = {
+            'identifier': str(uuid4()),
+            'created_at': int(datetime.now().timestamp()),
+            'children': children
+        }
+        parents.append(parent)
+    return parents
+
+
+def generate_invalid_data() -> List[dict]:
+    parents = []
+    for x in range(NUM_PARENTS):
+        children = []
+        for y in range(NUM_CHILDREN_PER_PARENT):
+            children.append({
+                'identifier': str(uuid4()),
+                'created_at': int(datetime.now().timestamp()),
+                'data': None
+            })
+        parent = {
+            'identifier': str(uuid4()),
+            'created_at': int(datetime.now().timestamp()),
+            'children': children
+        }
+        parents.append(parent)
+    return parents
+
+
+def get_data() -> Tuple[List[dict], List[dict]]:
+    print('Creating sample data')
+    valid_data = generate_valid_data()
+    invalid_data = generate_invalid_data()
+    return valid_data, invalid_data
+
+
+def run_benchmark(name: str, valid_data: List[dict], invalid_data: List[dict],
+                  deserialize_function: Callable[[dict], Any],
+                  serialize_function: Callable[[Any], Any]) -> TimeResults:
+    print(f'\nStarting {name} benchmark...')
+
+    results = TimeResults(name=name)
+
+    start = time.time()
+
+    instances = []
+
+    # Deserialization
+    _start = time.time()
+    for record in valid_data:
+        instances.append(deserialize_function(record))
+    results.deserialization = time.time() - _start
+
+    # Serialization
+    _start = time.time()
+    for instance in instances:
+        serialize_function(instance)
+    results.serialization = time.time() - _start
+
+    results.valid_data_processing = time.time() - start
+
+    # Updating attributes
+    _start = time.time()
+    for instance in instances:
+        instance.updated_at = int(time.time())
+        for child in instance.children:
+            child.data = {
+                'identifier': child.identifier,
+                'created_at': child.created_at
+            }
+            child.updated_at = int(time.time())
+    results.attributes_updating = time.time() - _start
+
+    # Invalid processing
+    _start = time.time()
+    for record in invalid_data:
+        try:
+            deserialize_function(record)
+        except:
+            pass
+    results.invalid_data_processing = time.time() - _start
+
+    results.total = time.time() - start
+    return results
+
+
+def main() -> None:
+    valid_data, invalid_data = get_data()
+    results = [
+        run_benchmark(
+            'attrs', valid_data, invalid_data, lambda record: AttrsParent(**record),
+            lambda instance: asdict(instance)
+        ),
+        run_benchmark(
+            'pydantic', valid_data, invalid_data, lambda record: PydanticParent(**record),
+            lambda instance: instance.dict()
+        ),
+        run_benchmark(
+            'pymodelio', valid_data, invalid_data, lambda record: PymodelioParent.from_dict(record),
+            lambda instance: instance.to_dict()
+        )
+    ]
+
+    for result in results:
+        print(f'\n{result.name} results:\n{result}')
+
+
+if __name__ == '__main__':
+    main()
+```
+
+You can update the variables `NUM_PARENTS` and `NUM_CHILDREN_PER_PARENT` for adjusting the amount of data you want to run the benchmark for (be careful about increasing the numbers too much because this will cause an exponential growth).
+
+The results of this benchmark executed in a _Manjaro Linux_ with an _AMD Ryzen 7 PRO 4750U_ proccessor and _16GB_ of ram were:
+
+```
+Creating sample data
+
+Starting attrs benchmark...
+
+Starting pydantic benchmark...
+
+Starting pymodelio benchmark...
+
+attrs results:
+Total 1.3591620922088623 seconds:
+  > Valid data processing (total 1.0909669399261475 seconds)
+     - Deserialization 0.292879581451416 seconds
+     - Serialization 0.7980787754058838 seconds
+  > Attributes updating (total 1.0909669399261475 seconds)
+  > Invalid data processing (total 0.00046539306640625 seconds)
+
+
+pydantic results:
+Total 3.92852520942688 seconds:
+  > Valid data processing (total 1.8618900775909424 seconds)
+     - Deserialization 0.8259766101837158 seconds
+     - Serialization 1.035902738571167 seconds
+  > Attributes updating (total 1.8618900775909424 seconds)
+  > Invalid data processing (total 1.8060908317565918 seconds)
+
+
+pymodelio results:
+Total 2.067831039428711 seconds:
+  > Valid data processing (total 1.3094236850738525 seconds)
+     - Deserialization 1.0344154834747314 seconds
+     - Serialization 0.2749974727630615 seconds
+  > Attributes updating (total 1.3094236850738525 seconds)
+  > Invalid data processing (total 0.6018850803375244 seconds)
+```
+
+First of all, it's important to know that in this benchmark, we implemented a case of use that can be easily implemented by using any of the three compared libraries. But there are some cases (as we described earlier in this doc) that can not be easily implemented with _attrs_ or _pydantic_.
+
+So now we can continue...
+
+#### attrs
+
+As we can see, _attrs_ is the most performing library of the three, but at what cost? Well, for the _attrs_ models we had to manually specify the validators and also implement one for `children`. Apart from this, we had to implement the converter for the deserialization process of `children`.
+
+So yes, in this benchmark _attrs_ got the best puntuation but with the most overhead of the three.
+
+#### pydantic
+
+_pydantic_ performed a bit better than pymodelio in terms of deserialization, but when we analyze the total time or the other evaluated topics, there was a big difference with the other two.
+
+It's important to mention that pydantic perform validations each time an attribute is updated. Pymodelio doesn't share that philosophy, instead, you can trigger the validations whenever you want by calling the `validate()` method of any pymodelio's model.
+
+#### pymodelio
+
+As we can see _pymodelio_ got a punctuation in the middle between _attrs_ and _pydantic_.
+
+In terms of deserialization, _pymodelio_ performed a bit worse than _pydantic_, but outperformed it in all other topics. Regarding serialization, pymodelio was the best of the three.
+
+#### Conslusions
+
+This benchmark was implemented for doing mainly performance comparisons. But don't forget that performance is not always the most important topic to consider when choosing a library like these ones.
+
+When you have a large project to maintain with multiple people working on the same codebase, usability is often an excellent point to choose one option over the others.
+
+So not only consider the numbers here, _attrs_ and _pydantic_ are great libraries that have been there for a long time. One does things that the other doesn't. We hope some day _pymodelio_ will also be another popular option, not to replace the others, but to complement them when they don't suit your needs or your coding style.
