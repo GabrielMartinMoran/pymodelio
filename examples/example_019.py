@@ -1,19 +1,24 @@
-#  Implementing a custom model's serializer
-from pymodelio import Attr, PymodelioModel
+# Preventing property serialization by using `@do_not_serialize` decorator
+from pymodelio import Attr, PymodelioModel, do_not_serialize
 
 
-class CustomModel(PymodelioModel):
-    attr: Attr(float)
+class Person(PymodelioModel):
+    _name: Attr(str, init_alias='name')
 
-    def to_dict(self) -> dict:
-        return {
-            'attr': str(self.attr)
-        }
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    @do_not_serialize
+    def lowercase_name(self) -> str:
+        # This property won't be automatically serialized
+        return self._name.lower()
 
 
-instance = CustomModel(attr=1.0)
+person = Person(name='Rick Sanchez')
 
-serialized = instance.to_dict()
+serialized = person.to_dict()
 
 print(serialized)
-# {'attr': '1.0'}
+# > {'name': 'Rick Sanchez'}

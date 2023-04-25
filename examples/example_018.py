@@ -1,24 +1,32 @@
-# Preventing property serialization by using `@do_not_serialize` decorator
-from pymodelio import Attr, PymodelioModel, do_not_serialize
+# Implementing a custom model's deserializer
+from pymodelio import Attr, PymodelioModel
 
 
-class Person(PymodelioModel):
-    _name: Attr(str, init_alias='name')
+class CustomModel(PymodelioModel):
+    attr: Attr(float)
 
-    @property
-    def name(self) -> str:
-        return self._name
+    @classmethod
+    def from_dict(cls, data: dict, auto_validate: bool = True) -> 'CustomModel':
+        _attr = data.get('attr', 0.0)
+        try:
+            _attr = float(_attr)
+        except ValueError:
+            _attr = 0.0
+        return CustomModel(attr=_attr, auto_validate=auto_validate)
 
-    @property
-    @do_not_serialize
-    def lowercase_name(self) -> str:
-        # This property won't be automatically serialized
-        return self._name.lower()
 
+instance = CustomModel.from_dict({'attr': '1'})
+print(instance)
+# > CustomModel(attr=1.0)
 
-person = Person(name='Rick Sanchez')
+instance = CustomModel.from_dict({'attr': 1})
+print(instance)
+# > CustomModel(attr=1.0)
 
-serialized = person.to_dict()
+instance = CustomModel.from_dict({'attr': 'INVALID_FLOAT_VALUE'})
+print(instance)
+# > CustomModel(attr=0.0)
 
-print(serialized)
-# > {'name': 'Rick Sanchez'}
+instance = CustomModel.from_dict({})
+print(instance)
+# > CustomModel(attr=0.0)

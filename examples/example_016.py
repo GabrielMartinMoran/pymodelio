@@ -1,32 +1,31 @@
-# Customizing validation process by implementing `__when_validating_an_attr__`
-from typing import Any
+# Creating a custom validator and using it
+from typing import List, Optional, Any
 
 from pymodelio import Attr, PymodelioModel
-from pymodelio.attribute import PymodelioAttr
 from pymodelio.exceptions import ModelValidationException
+from pymodelio.validators import Validator
+
+
+class SpecificStringValidator(Validator):
+
+    def __init__(self, possible_values: List[Any], nullable: bool = False, message: Optional[str] = None) -> None:
+        super().__init__(expected_type=str, nullable=nullable, message=message)
+        self._possible_values = possible_values
+
+    def validate(self, value: Any, path: str = None) -> None:
+        super().validate(value, path)
+        if value is None:
+            return
+        if value not in self._possible_values:
+            self._raise_validation_error(path, f'must be one of {self._possible_values}')
 
 
 class CustomModel(PymodelioModel):
-    name: Attr(str)  # As we haven't specified a validator, a StringValidator is inferred
-    age: Attr(str, validator=None)
-
-    def __when_validating_an_attr__(self, attr_name: str, attr_value: Any, attr_path: str,
-                                    parent_path: str, attr: PymodelioAttr) -> None:
-        # As this is called after name validator is called, we know that name is a string
-        if attr_name == 'name' and len(attr_value) == 0:
-            raise ModelValidationException(f'{attr_path} must not be blank')
-        if attr_name == 'age' and attr_value < 0:
-            raise ModelValidationException(f'{attr_path} must not be less than zero')
+    attr: Attr(str, validator=SpecificStringValidator(possible_values=['A', 'B', 'C']))
 
 
 try:
-    instance = CustomModel(name='', age=70)
+    instance = CustomModel(attr='D')
 except ModelValidationException as e:
     print(e)
-    # > CustomModel.name must not be blank
-
-try:
-    instance = CustomModel(name='Rick Sanchez', age=-1)
-except ModelValidationException as e:
-    print(e)
-    # > CustomModel.age must not be less than zero
+    # > CustomModel.attr must be one of ['A', 'B', 'C']
