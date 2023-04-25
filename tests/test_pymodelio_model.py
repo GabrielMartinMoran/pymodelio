@@ -419,3 +419,30 @@ def test_repr_formats_date():
     instance = TestCaseModel(d=date(2023, 4, 24))
 
     assert str(instance) == 'TestCaseModel(d=date(2023, 4, 24))'
+
+
+def test_model_comparison():
+    class TestCaseModel(PymodelioModel):
+        attr_1: Attr(int)
+        _attr_2: Attr(str, init_alias='attr_2')
+        __attr_3: Attr(float, init_alias='attr_3')
+
+    assert TestCaseModel(attr_1=1234, attr_2='Some string', attr_3=123.4) == \
+           TestCaseModel(attr_1=1234, attr_2='Some string', attr_3=123.4)
+
+    assert TestCaseModel(attr_1=1234, attr_2='Some string', attr_3=123.4) != \
+           TestCaseModel(attr_1=1234, attr_2='invalid string', attr_3=123.4)
+
+
+def test_model_comparison_ignores_attributes_marked_as_not_comparable():
+    class TestCaseModel(PymodelioModel):
+        attr_1: Attr(int)
+        attr_2: Attr(bool, compare=False)
+        _attr_3: Attr(str, init_alias='attr_3', compare=False)
+        __attr_4: Attr(float, init_alias='attr_4', compare=False)
+
+    assert TestCaseModel(attr_1=1234, attr_2=True, attr_3='Some string', attr_4=123.4) == \
+           TestCaseModel(attr_1=1234, attr_2=False, attr_3='Other string', attr_4=432.1)
+
+    assert TestCaseModel(attr_1=1234, attr_2=True, attr_3='Some string', attr_4=123.4) != \
+           TestCaseModel(attr_1=4321, attr_2=True, attr_3='Some string', attr_4=123.4)

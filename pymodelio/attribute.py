@@ -10,17 +10,18 @@ T = TypeVar('T')
 
 class PymodelioAttr:
     __slots__ = (
-        '_attr_type', '_initable', '_default_factory', '_init_aliases', '_validator'
+        '_attr_type', '_initable', '_default_factory', '_init_aliases', '_validator', '_compare'
     )
 
     def __init__(self, attr_type: T, validator: Optional[Validator] = UNDEFINED, initable: bool = True,
                  init_alias: Optional[str] = None, init_aliases: Optional[Iterable[str]] = None,
-                 default_factory: Callable = None) -> None:
+                 default_factory: Callable = None, compare: bool = True) -> None:
         self._attr_type = attr_type
         self._init_attr_aliases(init_alias, init_aliases)
         self._initable = initable or len(self._init_aliases) > 0
         self._default_factory = default_factory if default_factory is not None else (lambda: None)
         self._init_validator(validator)
+        self._compare = compare
 
     def _init_attr_aliases(self, init_alias: Optional[str], init_aliases: Optional[Iterable[str]]) -> None:
         if init_aliases is not None:
@@ -63,8 +64,13 @@ class PymodelioAttr:
     def init_aliases(self) -> Tuple[str]:
         return self._init_aliases
 
+    @property
+    def compare(self) -> bool:
+        return self._compare
+
 
 def Attr(attr_type: T, /, *, validator: Optional[Validator] = UNDEFINED, initable: bool = True,
-         init_alias: Optional[str] = None, init_aliases: Iterable[str] = None, default_factory: Callable = None) -> T:
+         init_alias: Optional[str] = None, init_aliases: Iterable[str] = None, default_factory: Callable = None,
+         compare: bool = True) -> T:
     return PymodelioAttr(attr_type=attr_type, validator=validator, initable=initable, init_alias=init_alias,
-                         init_aliases=init_aliases, default_factory=default_factory)
+                         init_aliases=init_aliases, default_factory=default_factory, compare=compare)

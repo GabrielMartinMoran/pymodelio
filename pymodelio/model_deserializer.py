@@ -46,8 +46,7 @@ class ModelDeserializer:
     def __map_attribute(cls, data: dict, exposed_attr_name: str, model_attr: PymodelioAttr) -> Any:  # noqa: C901
         attr_value = data[exposed_attr_name]
         # Pymodelio models
-        if hasattr(model_attr.attr_type, '__is_pymodelio_model__') and model_attr.attr_type.__is_pymodelio_model__ and \
-                isinstance(attr_value, dict):
+        if isinstance(attr_value, dict) and getattr(model_attr.attr_type, '__is_pymodelio_model__', False):
             return model_attr.attr_type.from_dict(attr_value, auto_validate=False)
         # Lists
         if isinstance(attr_value, list):
@@ -63,7 +62,7 @@ class ModelDeserializer:
                 print('WARNING: pymodelio automatic deserialization does not handle multi typed lists of models')
                 return attr_value
             # If the type is not a model
-            if not hasattr(list_type, '__is_pymodelio_model__') or not list_type.__is_pymodelio_model__:
+            if not getattr(list_type, '__is_pymodelio_model__', False):
                 return attr_value
             # At this point, the list is a list of models
             return [list_type.from_dict(x, auto_validate=False) for x in attr_value]

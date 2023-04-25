@@ -25,13 +25,14 @@ pip install -U pymodelio
 
 ## Table of contents
 
-- [Declaring the models](#declaring-the-models)
+- [Declaring models](#declaring-models)
+- [Comparing models](#comparing-models)
 - [Attribute's validation](#attributes-validation)
 - [Serialization and deserialization](#serialization-and-deserialization)
 - [Configuring pymodelio settings](#configuring-pymodelio-settings)
 - [Comparing pymodelio with other options](#comparing-pymodelio-with-other-options)
 
-## Declaring the models
+## Declaring models
 
 Pymodelio models are declared by inheriting from `PymodelioModel` class. When instantiating a model, all _initable_
 declared attributes should be provided (if not, default generated from _default_factory_ builders will be used instead).
@@ -632,6 +633,38 @@ These reserved attribute names are:
 - `__private_attrs__`
 - `__deserializers__`
 
+## Comparing models
+
+Pymodelio models implement comparison for checking if a model has the same attribute values as other models. By default, all attributes are marked for comparison, but you can customize that by specifying the `compare` parameter of the `Attr` function.
+
+**Example 15 - Customizing model comparison**
+
+```py
+from datetime import datetime
+from typing import Optional
+
+from pymodelio import Attr, PymodelioModel
+
+
+class Person(PymodelioModel):
+    _id: Attr(str, init_alias='id')
+    name: Attr(Optional[str])
+    created_at: Attr(datetime, compare=False)
+
+
+person_1 = Person(id='0001', name='Rick Sanchez', created_at=datetime.now())
+person_2 = Person(id='0001', name='Rick Sanchez', created_at=datetime.now())
+person_3 = Person(id='0002', name='Morty Smith', created_at=datetime.now())
+
+print(person_1 == person_2)
+# > True
+
+print(person_1 == person_3)
+# > False
+```
+
+In the example above, we are ignoring `created_at` when comparing models, that's why `person_1` is the equals to `person_2`.
+
 ## Attribute's validation
 
 In terms of validators, pymodelio provides already implementing validators that simplifies a lot of use cases, like validating an email, the
@@ -762,7 +795,7 @@ ForwardRefValidator(ref: ForwardRef, nullable: bool = False, message: Optional[s
 Even if a validator is not already implemented,
 you can do it in a very siple way by inheriting from `Validator` class or using some exposed middleware model initialization methods.
 
-**Example 15 - Creating a custom validator and using it**
+**Example 16 - Creating a custom validator and using it**
 
 ```py
 from typing import List, Optional, Any
@@ -801,7 +834,7 @@ Another way of validating a model if you don't want to implement a custom valida
 
 `__when_validating_an_attr__` is called right after an attribute validator is or would be called. This method is executed regardless if the attribute has or not a validator (for this you need to provide `validator` parameter as `None`).
 
-**Example 16 - Customizing validation process by implementing `__when_validating_an_attr__`**
+**Example 17 - Customizing validation process by implementing `__when_validating_an_attr__`**
 
 ```py
 from typing import Any
@@ -851,7 +884,7 @@ As we mentioned before, pymodelio models have a `from_dict` factory constructor,
 
 But you can override this method for customizing the de-serialization process of your models.
 
-**Example 17 - Implementing a custom model's deserializer**
+**Example 18 - Implementing a custom model's deserializer**
 
 ```py
 from pymodelio import Attr, PymodelioModel
@@ -895,7 +928,7 @@ properties (defined using the `@property` decorator) into a Python dictionary.
 In case of properties (defined using the `@property` decorator) that you don't want to serialize, you can use the
 `@do_not_serialize` decorator.
 
-**Example 18 - Preventing property serialization by using `@do_not_serialize` decorator**
+**Example 19 - Preventing property serialization by using `@do_not_serialize` decorator**
 
 ```py
 from pymodelio import Attr, PymodelioModel, do_not_serialize
@@ -925,7 +958,7 @@ print(serialized)
 
 If you want to customize the serialization process of your models, you can override the `to_dict` method.
 
-**Example 19 - Implementing a custom model serializer**
+**Example 20 - Implementing a custom model serializer**
 
 ```py
 from pymodelio import Attr, PymodelioModel
@@ -1294,7 +1327,7 @@ if __name__ == '__main__':
 
 You can update the variables `NUM_PARENTS` and `NUM_CHILDREN_PER_PARENT` for adjusting the amount of data you want to run the benchmark for (be careful about increasing the numbers too much because this will cause an exponential growth).
 
-The results of this benchmark executed in a _Manjaro Linux_ with an _AMD Ryzen 7 PRO 4750U_ proccessor and _16GB_ of ram were:
+The results of this benchmark executed in a _Manjaro Linux_ with an _AMD Ryzen 7 PRO 4750U_ proccessor and _16GB_ of ram, using _Python 3.10_ were:
 
 ```
 Creating sample data
@@ -1339,8 +1372,6 @@ So now we can continue...
 #### attrs
 
 As we can see, _attrs_ is the most performing library of the three, but at what cost? Well, for the _attrs_ models we had to manually specify the validators and also implement one for `children`. Apart from this, we had to implement the converter for the deserialization process of `children`.
-
-So yes, in this benchmark _attrs_ got the best puntuation but with the most overhead of the three.
 
 #### pydantic
 

@@ -49,36 +49,32 @@ def _get_parent_private_attr_prefixes(cls: type) -> List[str]:
     return prefixes
 
 
-def _get_private_attr_prefixes(cls) -> List[str]:
-    return ['__', _generate_private_attr_prefix(cls)] + _get_parent_private_attr_prefixes(cls)
+def _get_private_attr_prefixes(pmcls: type) -> List[str]:
+    return ['__', _generate_private_attr_prefix(pmcls)] + _get_parent_private_attr_prefixes(pmcls)
 
 
-def _get_private_attr_prefix(cls, attr_name: str) -> Optional[str]:
-    private_attr_prefixes = _get_private_attr_prefixes(cls)
+def _get_private_attr_prefix(pmcls: type, attr_name: str) -> Optional[str]:
+    private_attr_prefixes = _get_private_attr_prefixes(pmcls)
     for private_attr_prefix in private_attr_prefixes:
         if attr_name.startswith(private_attr_prefix):
             return private_attr_prefix
     return None
 
 
-def _is_private_attr_name(cls, attr_name: str) -> bool:
-    return _get_private_attr_prefix(cls, attr_name) is not None
+def _is_private_attr_name(pmcls: type, attr_name: str) -> bool:
+    return _get_private_attr_prefix(pmcls, attr_name) is not None
 
 
-def _is_protected_attr_name(cls, attr_name: str, private_checked: bool = False) -> bool:
-    if private_checked:
-        is_private = False
-    else:
-        is_private = _is_private_attr_name(cls, attr_name)
-    return (not is_private) and attr_name.startswith('_')
+def _is_protected_attr_name(attr_name: str) -> bool:
+    return attr_name.startswith('_')
 
 
-def _get_exposed_attr_name(cls, attr_name: str, attr: PymodelioAttr) -> Tuple[str]:
+def _get_exposed_attr_name(pmcls: type, attr_name: str, attr: PymodelioAttr) -> Tuple[str]:
     # Private attributes
-    if _is_private_attr_name(cls, attr_name):
+    if _is_private_attr_name(pmcls, attr_name):
         return tuple()
     # Protected attributes
-    if _is_protected_attr_name(cls, attr_name, private_checked=True):
+    if _is_protected_attr_name(attr_name):
         return tuple()
     # Public attributes
     return (attr_name,)
@@ -116,10 +112,10 @@ class PymodelioMeta(type):
         protected_attrs = set()
         private_attrs = set()
         for attr_name in attr_names:
-            if _is_protected_attr_name(pmcls, attr_name):
-                protected_attrs.add(attr_name)
-            elif _is_private_attr_name(pmcls, attr_name):
+            if _is_private_attr_name(pmcls, attr_name):
                 private_attrs.add(attr_name)
+            elif _is_protected_attr_name(attr_name):
+                protected_attrs.add(attr_name)
 
         cls_dir = dir(pmcls)
 

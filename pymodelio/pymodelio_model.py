@@ -1,7 +1,7 @@
 from datetime import datetime, date
-from typing import List, Any, Tuple, TypeVar, Callable, Dict
+from typing import List, Any, Tuple, TypeVar, Callable, Dict, Type
 
-from pymodelio.attribute import PymodelioAttr, Attr
+from pymodelio.attribute import PymodelioAttr
 from pymodelio.constants import UNDEFINED
 from pymodelio.model_deserializer import ModelDeserializer
 from pymodelio.model_serializer import ModelSerializer
@@ -15,7 +15,7 @@ class PymodelioModel(metaclass=PymodelioMeta):
     __is_pymodelio_model__ = True
     __inner_pymodelio_model__ = None
     __is_pymodelio_inner_model__ = False
-    __model_attrs__: Tuple[str, Attr] = tuple()
+    __model_attrs__: Tuple[str, PymodelioAttr] = tuple()
     __pymodelio_parent__ = None
     __serializable_attrs__ = []
     __exposed_attrs__ = {}
@@ -37,7 +37,6 @@ class PymodelioModel(metaclass=PymodelioMeta):
             attr_value = UNDEFINED
             for exposed_attr_name in exposed_attr_names:
                 if exposed_attr_name in kwargs:
-                    # if not self.__is_initable(attr_name, model_attr):
                     if not model_attr.initable:
                         raise NameError(
                             '%s attribute is not initable for class %s' % (attr_name, self.__class__.__name__))
@@ -51,10 +50,10 @@ class PymodelioModel(metaclass=PymodelioMeta):
         return args, kwargs
 
     def __before_validate__(self) -> None:
-        pass
+        return
 
     def __once_validated__(self) -> None:
-        pass
+        return
 
     def __get_exposed_attr_names(self, attr_name: str) -> Tuple[str]:
         return self.__exposed_attrs__.get(attr_name)
@@ -77,10 +76,10 @@ class PymodelioModel(metaclass=PymodelioMeta):
 
     def __when_validating_an_attr__(self, attr_name: str, attr_value: Any, attr_path: str,
                                     parent_path: str, attr: PymodelioAttr) -> None:
-        pass
+        return
 
     @classmethod
-    def from_dict(cls: T, data: dict, auto_validate: bool = True) -> T:
+    def from_dict(cls: Type[T], data: dict, auto_validate: bool = True) -> T:
         return ModelDeserializer.deserialize(cls, data, auto_validate)
 
     def to_dict(self) -> dict:
@@ -97,7 +96,6 @@ class PymodelioModel(metaclass=PymodelioMeta):
 
     def __repr__(self) -> str:
         formatted_fields = []
-
         for attr_name, attr_value in self._get_serializable_attrs():
             formatted_attr_value = self.__format_attr_value(attr_value)
             formatted_fields.append('%s=%s' % (attr_name, formatted_attr_value))
@@ -117,3 +115,11 @@ class PymodelioModel(metaclass=PymodelioMeta):
         if isinstance(value, date):
             return "date(%s, %s, %s)" % (value.year, value.month, value.day)
         return value
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, self.__class__):
+            return False
+        for attr_name, pymodelio_attr in self.__model_attrs__:
+            if pymodelio_attr.compare and getattr(self, attr_name) != getattr(other, attr_name):
+                return False
+        return True

@@ -34,13 +34,10 @@ def test_validate_raises_validation_error_when_provided_value_is_not_an_instance
 
 
 def test_validate_does_not_raise_error_when_provided_value_is_a_list_of_models_and_all_are_valid():
-    class ModelClass(PymodelioModel):
-        name: Attr(str)
-
     expected_types = [list, tuple, set]
     for expected_type in expected_types:
-        validator = IterableValidator(expected_type=expected_type, elements_type=ModelClass)
-        iterable = expected_type([ModelClass(name='tests')])
+        validator = IterableValidator(expected_type=expected_type, elements_type=str)
+        iterable = expected_type(['test'])
         validator.validate(iterable, 'path')
 
 
