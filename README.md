@@ -1339,30 +1339,30 @@ Starting pydantic benchmark...
 Starting pymodelio benchmark...
 
 attrs results:
-Total 1.3591620922088623 seconds:
-  > Valid data processing (total 1.0909669399261475 seconds)
-     - Deserialization 0.292879581451416 seconds
-     - Serialization 0.7980787754058838 seconds
-  > Attributes updating (total 1.0909669399261475 seconds)
-  > Invalid data processing (total 0.00046539306640625 seconds)
+Total 1.2478992938995361 seconds:
+  > Valid data processing (total 0.9774622917175293 seconds)
+     - Deserialization 0.26752424240112305 seconds
+     - Serialization 0.7099277973175049 seconds
+  > Attributes updating (total 0.9774622917175293 seconds)
+  > Invalid data processing (total 0.0004627704620361328 seconds)
 
 
 pydantic results:
-Total 3.92852520942688 seconds:
-  > Valid data processing (total 1.8618900775909424 seconds)
-     - Deserialization 0.8259766101837158 seconds
-     - Serialization 1.035902738571167 seconds
-  > Attributes updating (total 1.8618900775909424 seconds)
-  > Invalid data processing (total 1.8060908317565918 seconds)
+Total 3.9808452129364014 seconds:
+  > Valid data processing (total 1.9142224788665771 seconds)
+     - Deserialization 0.8401687145233154 seconds
+     - Serialization 1.074042558670044 seconds
+  > Attributes updating (total 1.9142224788665771 seconds)
+  > Invalid data processing (total 1.808525800704956 seconds)
 
 
 pymodelio results:
-Total 2.067831039428711 seconds:
-  > Valid data processing (total 1.3094236850738525 seconds)
-     - Deserialization 1.0344154834747314 seconds
-     - Serialization 0.2749974727630615 seconds
-  > Attributes updating (total 1.3094236850738525 seconds)
-  > Invalid data processing (total 0.6018850803375244 seconds)
+Total 1.9439215660095215 seconds:
+  > Valid data processing (total 1.2387640476226807 seconds)
+     - Deserialization 0.9972996711730957 seconds
+     - Serialization 0.2414543628692627 seconds
+  > Attributes updating (total 1.2387640476226807 seconds)
+  > Invalid data processing (total 0.5468699932098389 seconds)
 ```
 
 First of all, it's important to know that in this benchmark, we implemented a case of use that can be easily implemented by using any of the three compared libraries. But there are some cases (as we described earlier in this doc) that can not be easily implemented with _attrs_ or _pydantic_.
