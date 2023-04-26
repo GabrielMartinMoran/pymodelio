@@ -446,3 +446,39 @@ def test_model_comparison_ignores_attributes_marked_as_not_comparable():
 
     assert TestCaseModel(attr_1=1234, attr_2=True, attr_3='Some string', attr_4=123.4) != \
            TestCaseModel(attr_1=4321, attr_2=True, attr_3='Some string', attr_4=123.4)
+
+
+def test_model_inner_model_class_is_created_correctly_when_parent_model_was_already_instantiated():
+    class TestCaseParentModel(PymodelioModel):
+        _attr_1: Attr(int, init_alias='attr_1')
+
+    assert not hasattr(TestCaseParentModel, '_TestCaseParentModel__inner_pymodelio_model')
+
+    parent_instance = TestCaseParentModel(attr_1=987)
+
+    assert getattr(TestCaseParentModel, '_TestCaseParentModel__inner_pymodelio_model') is not None
+    assert isinstance(parent_instance, TestCaseParentModel)
+    assert parent_instance._attr_1 == 987
+
+    class TestCaseChildModel(TestCaseParentModel):
+        _attr_2: Attr(int, init_alias='attr_2')
+
+    assert not TestCaseChildModel.__is_pymodelio_inner_model__
+    assert TestCaseChildModel.__model_attrs__ == tuple()
+    assert TestCaseChildModel.__pymodelio_parent__ is None
+    assert TestCaseChildModel.__serializable_attrs__ == list()
+    assert TestCaseChildModel.__exposed_attrs__ == dict()
+    assert TestCaseChildModel.__protected_attrs__ == set()
+    assert TestCaseChildModel.__private_attrs__ == set()
+    assert TestCaseChildModel.__deserializers__ == dict()
+    assert not hasattr(TestCaseChildModel, '_TestCaseChildModel__inner_pymodelio_model')
+
+    child_instance = TestCaseChildModel(attr_1=123, attr_2=456)
+
+    assert getattr(TestCaseChildModel, '_TestCaseChildModel__inner_pymodelio_model') is not None
+    assert getattr(TestCaseParentModel, '_TestCaseParentModel__inner_pymodelio_model') != \
+           getattr(TestCaseChildModel, '_TestCaseChildModel__inner_pymodelio_model')
+
+    assert isinstance(child_instance, TestCaseChildModel)
+    assert child_instance._attr_1 == 123
+    assert child_instance._attr_2 == 456

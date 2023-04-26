@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from typing import Any, TypeVar
+from typing import Any, TypeVar, Type
 
 from pymodelio import UNDEFINED
 from pymodelio.attribute import PymodelioAttr
@@ -13,11 +13,12 @@ class ModelDeserializer:
     __GENERIC_ALIASES = {'_GenericAlias', '_UnionGenericAlias'}
 
     @classmethod
-    def deserialize(cls, pmcls: T, data: dict, auto_validate: bool) -> T:
-        if pmcls.__inner_pymodelio_model__ is None:
+    def deserialize(cls, pmcls: Type[T], data: dict, auto_validate: bool) -> T:
+        inner_cls = pmcls._get_inner_model()
+        if inner_cls is None:
             # Generates the inner class
             PymodelioMeta.prepare(pmcls)
-        inner_cls = pmcls.__inner_pymodelio_model__
+            inner_cls = pmcls._get_inner_model()
         attrs = {}
         for attr_name, model_attr in inner_cls.__model_attrs__:
             if model_attr.initable:

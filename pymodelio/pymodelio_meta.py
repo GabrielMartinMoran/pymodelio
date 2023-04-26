@@ -102,7 +102,7 @@ def _get_custom_deserializers(pmcls: type, cls_dir: List[str]) -> dict:
 
 
 class PymodelioMeta(type):
-    INNER_MODEL_KEY = '__is_pymodelio_inner_model__'
+    IS_INNER_MODEL_KEY = '__is_pymodelio_inner_model__'
 
     @classmethod
     def prepare(cls, pmcls: type) -> type:
@@ -121,7 +121,7 @@ class PymodelioMeta(type):
 
         inner_dict = {
             '__slots__': attr_names,
-            PymodelioMeta.INNER_MODEL_KEY: True,
+            PymodelioMeta.IS_INNER_MODEL_KEY: True,
             '__pymodelio_parent__': pmcls,
             '__model_attrs__': [(k, model_attrs[k]) for k in model_attrs],
             '__serializable_attrs__': _get_serializable_attr_names(pmcls, set(cls_dir + list(attr_names))),
@@ -133,21 +133,22 @@ class PymodelioMeta(type):
 
         inner_class = type(pmcls.__name__, (pmcls,) + pmcls.__bases__, inner_dict)
 
-        pmcls.__inner_pymodelio_model__ = inner_class
+        pmcls._set_inner_model(inner_class)
 
         return inner_class
 
     def __call__(pmcls, *args, **kwargs):
         # If it is an inner model
-        if hasattr(pmcls, PymodelioMeta.INNER_MODEL_KEY) and pmcls.__is_pymodelio_inner_model__:
+        if hasattr(pmcls, PymodelioMeta.IS_INNER_MODEL_KEY) and pmcls.__is_pymodelio_inner_model__:
             return super().__call__(*args, **kwargs)
 
         # If it has an inner model already defined
-        if hasattr(pmcls, '__inner_pymodelio_model__') and pmcls.__inner_pymodelio_model__ is not None:
-            return pmcls.__inner_pymodelio_model__(*args, **kwargs)
+        inner_model = pmcls._get_inner_model()
+        if inner_model is not None:
+            return inner_model(*args, **kwargs)
 
-        inner_class = PymodelioMeta.prepare(pmcls)
+        inner_model = PymodelioMeta.prepare(pmcls)
 
-        shared_vars.model_globals[inner_class.__name__] = inner_class
+        shared_vars.model_globals[inner_model.__name__] = inner_model
 
-        return inner_class(*args, **kwargs)
+        return inner_model(*args, **kwargs)

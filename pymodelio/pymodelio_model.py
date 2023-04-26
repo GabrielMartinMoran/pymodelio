@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from typing import List, Any, Tuple, TypeVar, Callable, Dict, Type
+from typing import List, Any, Tuple, TypeVar, Callable, Dict, Type, Optional
 
 from pymodelio.attribute import PymodelioAttr
 from pymodelio.constants import UNDEFINED
@@ -13,7 +13,6 @@ T = TypeVar('T')
 class PymodelioModel(metaclass=PymodelioMeta):
     # Only for intellisense
     __is_pymodelio_model__ = True
-    __inner_pymodelio_model__ = None
     __is_pymodelio_inner_model__ = False
     __model_attrs__: Tuple[str, PymodelioAttr] = tuple()
     __pymodelio_parent__ = None
@@ -123,3 +122,11 @@ class PymodelioModel(metaclass=PymodelioMeta):
             if pymodelio_attr.compare and getattr(self, attr_name) != getattr(other, attr_name):
                 return False
         return True
+
+    @classmethod
+    def _get_inner_model(cls) -> Optional[type]:
+        return getattr(cls, '_%s__inner_pymodelio_model' % cls.__name__, None)
+
+    @classmethod
+    def _set_inner_model(cls, inner_model: type) -> None:
+        setattr(cls, '_%s__inner_pymodelio_model' % cls.__name__, inner_model)
