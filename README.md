@@ -15,7 +15,7 @@ restrictions.
 
 # Installation
 
-Installing the module is simple as running the following script on your terminal:initable_ainitable_as_public_aliass_public_alias
+Installing the module is simple as running the following script on your terminal.
 
 ```shell
 pip install -U pymodelio
