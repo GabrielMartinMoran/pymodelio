@@ -6,6 +6,7 @@ from pymodelio.validators.validation_patterns import EMAIL_VALIDATION_PATTERN
 
 
 class EmailValidator(StringValidator):
+    _validation_regex = re.compile(EMAIL_VALIDATION_PATTERN)
 
     def __init__(self, nullable: bool = False, message: Optional[str] = None) -> None:
         super().__init__(nullable=nullable, message=message)
@@ -15,5 +16,5 @@ class EmailValidator(StringValidator):
         if value is None:
             return
         # Is overriden for adding a custom message and validating the string as lowercase
-        if re.compile(EMAIL_VALIDATION_PATTERN).match(value.lower()) is None:
+        if self._validation_regex.match(value.lower()) is None:
             self._raise_validation_error(path, 'is not a valid email address')

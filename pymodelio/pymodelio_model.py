@@ -66,12 +66,14 @@ class PymodelioModel(metaclass=PymodelioMeta):
         """
         It must raise ModelValidationException in case of an invalid attribute
         """
-        for attr_name, model_attr in self.__model_attrs__:
-            attr_value = getattr(self, attr_name)
-            parent_path = path if path is not None else self.__class__.__name__
-            attr_path = '%s.%s' % (parent_path, attr_name)
-            model_attr.validate(attr_value, path=attr_path)
-            self.__when_validating_an_attr__(attr_name, attr_value, attr_path, parent_path, model_attr)
+        [self.__validate_attr(model_attr[0], model_attr[1], path) for model_attr in self.__model_attrs__]
+
+    def __validate_attr(self, attr_name: str, model_attr: PymodelioAttr, path: str) -> None:
+        attr_value = getattr(self, attr_name)
+        parent_path = path if path is not None else self.__class__.__name__
+        attr_path = '%s.%s' % (parent_path, attr_name)
+        model_attr.validate(attr_value, path=attr_path)
+        self.__when_validating_an_attr__(attr_name, attr_value, attr_path, parent_path, model_attr)
 
     def __when_validating_an_attr__(self, attr_name: str, attr_value: Any, attr_path: str,
                                     parent_path: str, attr: PymodelioAttr) -> None:

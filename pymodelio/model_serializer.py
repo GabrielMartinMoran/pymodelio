@@ -9,7 +9,7 @@ class ModelSerializer:
         if getattr(value, '__is_pymodelio_model__', False):
             return cls._serialize_model(value)
         if isinstance(value, (list, tuple, set)):
-            return [cls.serialize(x) for x in value]
+            return list(map(cls.serialize, value))
         if isinstance(value, datetime):
             return value.isoformat()
         if isinstance(value, date):

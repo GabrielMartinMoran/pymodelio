@@ -65,18 +65,15 @@ class ModelDeserializer:
             # If the type is not a model
             if not getattr(list_type, '__is_pymodelio_model__', False):
                 return attr_value
-            # At this point, the list is a list of models
+                # At this point, the list is a list of models
             return [list_type.from_dict(x, auto_validate=False) for x in attr_value]
-        # Parse datetimes
-        if model_attr.attr_type == datetime and isinstance(attr_value, str):
-            try:
+        try:
+            # Parse datetimes
+            if model_attr.attr_type == datetime and isinstance(attr_value, str):
                 return to_datetime(attr_value)
-            except Exception:
-                return attr_value
-        # Parse dates
-        if model_attr.attr_type == date and isinstance(attr_value, str):
-            try:
+            # Parse dates
+            if model_attr.attr_type == date and isinstance(attr_value, str):
                 return to_date(attr_value)
-            except Exception:
-                return attr_value
+        except Exception:
+            return attr_value
         return attr_value
