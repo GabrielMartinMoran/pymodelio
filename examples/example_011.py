@@ -10,12 +10,12 @@ class Person(PymodelioModel):
     password: Attr(Optional[str])
     hashed_password: Attr(str)
 
-    def __before_init__(self, *args, **kwargs) -> Tuple[Tuple[Any], Dict[Any, Any]]:
+    def __before_init__(self, **kwargs) -> Dict[str, Any]:
         if 'password' in kwargs and 'hashed_password' not in kwargs:
             _kwargs = {**kwargs, **{'hashed_password': self._hash_password(kwargs['password'])}}
         else:
             _kwargs = kwargs
-        return args, _kwargs
+        return _kwargs
 
     @classmethod
     def _hash_password(cls, pwd: str) -> str:

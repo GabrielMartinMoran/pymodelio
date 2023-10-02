@@ -1,5 +1,5 @@
 from datetime import datetime, timezone, date
-from typing import List, Union
+from typing import List, Union, Tuple
 from unittest.mock import patch
 
 from pymodelio import PymodelioModel, Attr, UNDEFINED, PymodelioSettings, PymodelioSetting
@@ -102,3 +102,14 @@ def test_from_dict_does_not_deserialize_list_items_when_items_are_not_a_pymodeli
 
     instance = TestCaseModel.from_dict({'attr': [{'index': 1}]})
     assert instance.attr == [{'index': 1}]
+
+
+def test_from_dict_deserialize_tuple_with_different_types():
+    class InnerModel(PymodelioModel):
+        foo: Attr(str)
+
+    class TestCaseModel(PymodelioModel):
+        attr: Attr(Tuple[int, float, str, InnerModel], validator=None)
+
+    instance = TestCaseModel.from_dict({'attr': [1, 2.5, 'STR', {'foo': 'bar'}]})
+    assert instance.attr == (1, 2.5, 'STR', InnerModel(foo='bar'))

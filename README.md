@@ -45,6 +45,7 @@ declared attributes should be provided (if not, default generated from _default_
 from datetime import datetime
 from pymodelio import Attr, PymodelioModel
 
+
 class Person(PymodelioModel):
     name: Attr(str)
     created_at: Attr(datetime)
@@ -63,7 +64,11 @@ print(person.describe())
 # > Rick Sánchez is 70 years old, and it was created on 2023-04-18 13:16:01.838463
 ```
 
-_IMPORTANT NOTE:_ Note that pymodelio attributes are defined by using Python type annotations, so we are not setting dafault values to static class attributes. Also, when you interact with these attibutes, the code autocompletion engine is going to autocomplete with the methods and properties of attribute type you specified as the first parameter of `Attr` (because on runtime you will be really working with that attribute type). For instance when interacting with `name` inside of the class, that prop will we considered as a `str`.
+_IMPORTANT NOTE:_ Note that pymodelio attributes are defined by using Python type annotations, so we are not setting
+dafault values to static class attributes. Also, when you interact with these attibutes, the code autocompletion engine
+is going to autocomplete with the methods and properties of attribute type you specified as the first parameter
+of `Attr` (because on runtime you will be really working with that attribute type). For instance when interacting
+with `name` inside of the class, that prop will we considered as a `str`.
 
 ### What about using models from other models?
 
@@ -72,6 +77,7 @@ _IMPORTANT NOTE:_ Note that pymodelio attributes are defined by using Python typ
 ```py
 from datetime import datetime
 from pymodelio import Attr, PymodelioModel
+
 
 class Pet(PymodelioModel):
     name: Attr(str)
@@ -93,7 +99,8 @@ print(person)
 
 ### What about using a model within the same model?
 
-For doing this, we need to use [forward references](https://peps.python.org/pep-0484/#forward-references) when using the `Person` model, because it was not yet initialized during the attribute declaration.
+For doing this, we need to use [forward references](https://peps.python.org/pep-0484/#forward-references) when using
+the `Person` model, because it was not yet initialized during the attribute declaration.
 
 **Example 3 - Using the same model as a nested one**
 
@@ -101,6 +108,7 @@ For doing this, we need to use [forward references](https://peps.python.org/pep-
 from datetime import datetime
 from typing import Optional
 from pymodelio import Attr, PymodelioModel
+
 
 class Person(PymodelioModel):
     name: Attr(str)
@@ -124,14 +132,23 @@ print(person)
 
 ### How can I itinialize protected or private attributes
 
-Even when Python doesn't implement a strict way of definig _protected_ or _private_ attributes, there is a commonly used convention that says: Adding a single underscore as a prefix of the attribute name (like `_name`) suggests that that attribute is _protected_. Also, adding a double underscore as a prefix of the attribute name (like `__id`), suggests that that attribute is _private_.
+Even when Python doesn't implement a strict way of definig _protected_ or _private_ attributes, there is a commonly used
+convention that says: Adding a single underscore as a prefix of the attribute name (like `_name`) suggests that that
+attribute is _protected_. Also, adding a double underscore as a prefix of the attribute name (like `__id`), suggests
+that that attribute is _private_.
 
-Pymodelio provides multiple ways of letting you initialize _protected_ and _private_ attributes either from the class constructor or from the deserializer factory constructor (expained later in this documentation). These ways of doing this are:
+Pymodelio provides multiple ways of letting you initialize _protected_ and _private_ attributes either from the class
+constructor or from the deserializer factory constructor (expained later in this documentation). These ways of doing
+this are:
 
-- **Giving an initialization alias to the attribute:** Passing the `init_alias` parameter to the `Attr` function, you can define an alias used to map values from in the constructors.
-- **Giving multiple initialization aliases to the attribute:** Passing the `init_aliases` parameter to the `Attr` function, you can define multiple aliases used to map values from in the constructors.
+- **Giving an initialization alias to the attribute:** Passing the `init_alias` parameter to the `Attr` function, you
+  can define an alias used to map values from in the constructors.
+- **Giving multiple initialization aliases to the attribute:** Passing the `init_aliases` parameter to the `Attr`
+  function, you can define multiple aliases used to map values from in the constructors.
 
-It's important to know that these aliases are only for populating the model from the constructors. So all the interactions within the model with the attributes defined like these and from other models are done using the _real_ name of the attribute, not the aliased one.
+It's important to know that these aliases are only for populating the model from the constructors. So all the
+interactions within the model with the attributes defined like these and from other models are done using the _real_
+name of the attribute, not the aliased one.
 
 Let's see some examples of this:
 
@@ -192,11 +209,15 @@ print(person)
 # > Person(id='0002', name='Morty Smith', occupation='Student')
 ```
 
-In this example, we can also see other resource that pymodelio provides. The `from_dict` factory constructor we mentioned befor. Instead of initializing a models using their constructors, we can deserialize them from python dictionaries by calling the `from_dict` method of any pymodelio model.
+In this example, we can also see other resource that pymodelio provides. The `from_dict` factory constructor we
+mentioned befor. Instead of initializing a models using their constructors, we can deserialize them from python
+dictionaries by calling the `from_dict` method of any pymodelio model.
 
 ### Now we are ready too see a more complex example
 
-In this example we will use the concepts we learned before and also customize some of the validators. Because yes, when you don't pass the `validator` parameter to the `Attr` function, it assumes the vaidator based on the type you provided as the first parameter of the function.
+In this example we will use the concepts we learned before and also customize some of the validators. Because yes, when
+you don't pass the `validator` parameter to the `Attr` function, it assumes the vaidator based on the type you provided
+as the first parameter of the function.
 
 But caution, only these types can be automatically inferred by pymodelio:
 
@@ -318,7 +339,8 @@ print(computer)
 
 Well, this depends on how you configured the attribute.
 
-If you didn't specify any special logic for default values, the default `default_factory` method of the attribute will be called, returning a `None` as we can see in this example:
+If you didn't specify any special logic for default values, the default `default_factory` method of the attribute will
+be called, returning a `None` as we can see in this example:
 
 **Example 7 - Initializing an attribute without providing a value**
 
@@ -340,7 +362,8 @@ print(person)
 
 In this example, we typed `name` as `Optional[str]` for not getting a validation error during the insantiation.
 
-But if we pass a custom `default_factory` parameter to the attribute that retuns a string, we don't need to make it nullable, like this:
+But if we pass a custom `default_factory` parameter to the attribute that retuns a string, we don't need to make it
+nullable, like this:
 
 **Example 8 - Custom default factory**
 
@@ -360,9 +383,12 @@ print(person)
 
 ### Preventing attribute's initialization
 
-What if we don't want to allow an attribute initialization at all? Well, for that can pass another parameter to the `Attr` function called `initable`. If `initable` is `False`, that attribute can't be initialized neither from the class constructor nor the `from_dict` factory constructor.
+What if we don't want to allow an attribute initialization at all? Well, for that can pass another parameter to
+the `Attr` function called `initable`. If `initable` is `False`, that attribute can't be initialized neither from the
+class constructor nor the `from_dict` factory constructor.
 
-But be aware that if you provide any of the parameters `init_alias` or `init_aliases` to the `Attr` function, the value of `initable` will be ignored.
+But be aware that if you provide any of the parameters `init_alias` or `init_aliases` to the `Attr` function, the value
+of `initable` will be ignored.
 
 **Example 9 - Non-initable attributes**
 
@@ -387,9 +413,13 @@ person = Person(internal_id='custom id')
 
 ### Customizing the deserialization process
 
-When you want to customize the serialization process of an attribute, you can use the `@deserializes` decorator specifying the alias (in case you specified it) to apply a special treatment to. This custom deserialized will _only_ be used when the model is instantiated via the `from_dict` factory constructor, not when initialized by using the class constructor.
+When you want to customize the serialization process of an attribute, you can use the `@deserializes` decorator
+specifying the alias (in case you specified it) to apply a special treatment to. This custom deserialized will _only_ be
+used when the model is instantiated via the `from_dict` factory constructor, not when initialized by using the class
+constructor.
 
-`@deserializes` decorator can receive as a parameter, a string or an iterable of string that represent the names or aliases (if defined) to deserialize with the decorated function.
+`@deserializes` decorator can receive as a parameter, a string or an iterable of string that represent the names or
+aliases (if defined) to deserialize with the decorated function.
 
 **Example 10 - Customizing the deserialization process with `@deserializes`**
 
@@ -431,32 +461,34 @@ print(person)
 # > Person(age=70, id='1', name='Rick Sánchez', occupation='Scientist')
 ```
 
-The method that is decorated by `@deserializes` should have this structure (you can modify the type of the `value` parameter and the output for linting purposes as we did in the example above).
+The method that is decorated by `@deserializes` should have this structure (you can modify the type of the `value`
+parameter and the output for linting purposes as we did in the example above).
 
 ```py
 @deserializes('exposed_attribute_name')
 def any_method_name(self, value: Any) -> Any:
-    processed_value = ... # Any processing you want
+    processed_value = ...  # Any processing you want
     return processed_value
 ```
 
 ### Customizing the model's initialization workflow
 
-There are some dunder methods that can be overridden in any pymodelio's model for adding custom logic to the model's initializatio workflow.
+There are some dunder methods that can be overridden in any pymodelio's model for adding custom logic to the model's
+initializatio workflow.
 
 These dunder method are:
 
 ```py
 class Model(PymodelioModel):
 
-    def __before_init__(self, *args, **kwargs) -> Tuple[Tuple[Any], Dict[Any, Any]]:
+    def __before_init__(self, **kwargs) -> Dict[str, Any]:
         # This method is called before any other method when the model's constructor
         # is called (included from_dict()).
         # It receives the same parameters the constructor gets.
         # This method returns args and kwargs for not forcing updating the
         # function arguments (that depending on the context, it can be a bad
         # practice).
-        return args, kwargs
+        return kwargs
 
     def __before_validate__(self) -> None:
         # This method is called after initializing the model attributes but just before
@@ -470,7 +502,8 @@ class Model(PymodelioModel):
         pass
 ```
 
-Now that we know this, let's see some example of how to inject custom data into the model's initialization flow using these dunder method.
+Now that we know this, let's see some example of how to inject custom data into the model's initialization flow using
+these dunder method.
 
 In this first example, we are hashing a password only if we received a plain password when the model is initialized.
 
@@ -488,7 +521,7 @@ class Person(PymodelioModel):
     password: Attr(Optional[str])
     hashed_password: Attr(str)
 
-    def __before_init__(self, *args, **kwargs) -> Tuple[Tuple[Any], Dict[Any, Any]]:
+    def __before_init__(self, **kwargs) -> Dict[str, Any]:
         # This method is called before any other method when the model's constructor
         # is called (included from_dict()).
         # It receives the same parameters the constructor gets.
@@ -499,7 +532,7 @@ class Person(PymodelioModel):
             _kwargs = {**kwargs, **{'hashed_password': self._hash_password(kwargs['password'])}}
         else:
             _kwargs = kwargs
-        return args, _kwargs
+        return _kwargs
 
     @classmethod
     def _hash_password(cls, pwd: str) -> str:
@@ -548,9 +581,12 @@ print(person)
 #       username='rick_sanchez')
 ```
 
-When you need to perform some model logic once the validation process has ended, you can override the `__once_validated__` method.
+When you need to perform some model logic once the validation process has ended, you can override
+the `__once_validated__` method.
 
-It's possible to use `__once_validated__` for implementing some custom validations if you need so, but for that specific case it would be a better practice to implement your custom validator by inheriting from pymodelio validator (then we will go deeper into this topic).
+It's possible to use `__once_validated__` for implementing some custom validations if you need so, but for that specific
+case it would be a better practice to implement your custom validator by inheriting from pymodelio validator (then we
+will go deeper into this topic).
 
 **Example 13 - Performing operations after the model was validated via `__once_validated__`**
 
@@ -576,9 +612,14 @@ print(person)
 # > Person(created_at=datetime(2023, 4, 24, 10, 33, 16, 780413, None), username='rick_sanchez')
 ```
 
-In the example above, we can see that we injected a non-pymodelio attribute into the model by using the `__once_validated__` method. This is possible, but it's _important_ to know that non pymodelio attributes will be serialized or included in the string representation of the model **only** if they are exposed by using the `@property` decorator.
+In the example above, we can see that we injected a non-pymodelio attribute into the model by using
+the `__once_validated__` method. This is possible, but it's _important_ to know that non pymodelio attributes will be
+serialized or included in the string representation of the model **only** if they are exposed by using the `@property`
+decorator.
 
-This example helped for showing one possible usage of the `__once_validated__` method, but for this specific case, it would be a better practice to define `_created_at` as a non-intable attribute with a custom `default_factory` function that initializes it.
+This example helped for showing one possible usage of the `__once_validated__` method, but for this specific case, it
+would be a better practice to define `_created_at` as a non-intable attribute with a custom `default_factory` function
+that initializes it.
 
 ### Attribute's validation
 
@@ -586,7 +627,9 @@ One principle which this module is stood on, is that an instance of a domain mod
 valid. For ensuring that, pymodelio automatically validates the instantiated models if you don't specify the opposite
 by passing the parameter `auto_validate=False` for either the class constructor or the `from_dict` factory constructor.
 
-So, it's important have in mind that for performance improvements, we could disable auto validation in nested models initialization when using the constructor way of instantiating our models because when the parent validator is called, it will validate the whole structure.
+So, it's important have in mind that for performance improvements, we could disable auto validation in nested models
+initialization when using the constructor way of instantiating our models because when the parent validator is called,
+it will validate the whole structure.
 
 **Example 14 - Disabling auto validate in children for improving performance**
 
@@ -618,7 +661,8 @@ print(parent_model)
 
 ### Reserved attribute names
 
-Some dunder attributes are used by pymodelio in its models, there attributes shouldn't be declared in the defined models because they will be overridden when loading the class.
+Some dunder attributes are used by pymodelio in its models, there attributes shouldn't be declared in the defined models
+because they will be overridden when loading the class.
 
 These reserved attribute names are:
 
@@ -635,7 +679,9 @@ These reserved attribute names are:
 
 ## Comparing models
 
-Pymodelio models implement comparison for checking if a model has the same attribute values as other models. By default, all attributes are marked for comparison, but you can customize that by specifying the `compare` parameter of the `Attr` function.
+Pymodelio models implement comparison for checking if a model has the same attribute values as other models. By default,
+all attributes are marked for comparison, but you can customize that by specifying the `compare` parameter of the `Attr`
+function.
 
 **Example 15 - Customizing model comparison**
 
@@ -663,11 +709,13 @@ print(person_1 == person_3)
 # > False
 ```
 
-In the example above, we are ignoring `created_at` when comparing models, that's why `person_1` is the equals to `person_2`.
+In the example above, we are ignoring `created_at` when comparing models, that's why `person_1` is the equals
+to `person_2`.
 
 ## Attribute's validation
 
-In terms of validators, pymodelio provides already implementing validators that simplifies a lot of use cases, like validating an email, the
+In terms of validators, pymodelio provides already implementing validators that simplifies a lot of use cases, like
+validating an email, the
 length of a string, the range of a number, the emptiness of a list, etc.
 
 ### Available validators
@@ -784,7 +832,9 @@ BoolValidator(nullable: bool = False, message: Optional[str] = None)
 
 **ForwardRefValidator**
 
-A validator used for forwarded references (see `typing.ForwardRef` for more info in `typing` module documentation). The expected type of the validator is intended to be always a _PymodelioModel_ and it's obtained when validating the attribute the first time.
+A validator used for forwarded references (see `typing.ForwardRef` for more info in `typing` module documentation). The
+expected type of the validator is intended to be always a _PymodelioModel_ and it's obtained when validating the
+attribute the first time.
 
 ```py
 ForwardRefValidator(ref: ForwardRef, nullable: bool = False, message: Optional[str] = None)
@@ -793,7 +843,8 @@ ForwardRefValidator(ref: ForwardRef, nullable: bool = False, message: Optional[s
 ### Customizing the validation process
 
 Even if a validator is not already implemented,
-you can do it in a very siple way by inheriting from `Validator` class or using some exposed middleware model initialization methods.
+you can do it in a very siple way by inheriting from `Validator` class or using some exposed middleware model
+initialization methods.
 
 **Example 16 - Creating a custom validator and using it**
 
@@ -830,9 +881,12 @@ except ModelValidationException as e:
     # > CustomModel.attr must be one of ['A', 'B', 'C']
 ```
 
-Another way of validating a model if you don't want to implement a custom validator, is to override the dunded method `__when_validating_an_attr__` in the defined model.
+Another way of validating a model if you don't want to implement a custom validator, is to override the dunded
+method `__when_validating_an_attr__` in the defined model.
 
-`__when_validating_an_attr__` is called right after an attribute validator is or would be called. This method is executed regardless if the attribute has or not a validator (for this you need to provide `validator` parameter as `None`).
+`__when_validating_an_attr__` is called right after an attribute validator is or would be called. This method is
+executed regardless if the attribute has or not a validator (for this you need to provide `validator` parameter
+as `None`).
 
 **Example 17 - Customizing validation process by implementing `__when_validating_an_attr__`**
 
@@ -872,15 +926,19 @@ except ModelValidationException as e:
 
 ### Force model validations
 
-Pymodelio doesn't validate an attribute each time it is updated, because we don't think that's required in most cases. Instead of this, all pymodelio model have a method called `validate`. You can call this method any time you want to validate your model.
+Pymodelio doesn't validate an attribute each time it is updated, because we don't think that's required in most cases.
+Instead of this, all pymodelio model have a method called `validate`. You can call this method any time you want to
+validate your model.
 
 ## Serialization and deserialization
 
-We have mentioned someting about serialization and deserialization across this document, but let's see in depth how it works.
+We have mentioned someting about serialization and deserialization across this document, but let's see in depth how it
+works.
 
 ### Deserialization
 
-As we mentioned before, pymodelio models have a `from_dict` factory constructor, that is intended to be using for transforming Python dictionaries into model instances.
+As we mentioned before, pymodelio models have a `from_dict` factory constructor, that is intended to be using for
+transforming Python dictionaries into model instances.
 
 But you can override this method for customizing the de-serialization process of your models.
 
@@ -922,7 +980,8 @@ print(instance)
 
 ### Serialization
 
-For serialization, pymodelio models implement a `to_dict()` method that serializes the public attributes (based on the underscore attribute name's convention mentioned at the beginning of the document) and
+For serialization, pymodelio models implement a `to_dict()` method that serializes the public attributes (based on the
+underscore attribute name's convention mentioned at the beginning of the document) and
 properties (defined using the `@property` decorator) into a Python dictionary.
 
 In case of properties (defined using the `@property` decorator) that you don't want to serialize, you can use the
@@ -983,21 +1042,25 @@ print(serialized)
 
 ## Configuring pymodelio settings
 
-As we mentioned before, there are some settings that can be configured by calling the `PymodelioSettings` class. These settigs and their expected types are:
+As we mentioned before, there are some settings that can be configured by calling the `PymodelioSettings` class. These
+settigs and their expected types are:
 
-- **PymodelioSetting.AUTO_PARSE_DATES_AS_UTC** (`bool`): If `True`, deserialized date and datetime timezones will be replaced by `UTC`.
-- **PymodelioSetting.USE_DEFAULT_ATTR_VALIDATOR_IF_NOT_DEFINED** (`bool`): If a validator is not provided when defining a model attribute (like `Attr(str)`) an automatically inferred validator will be used instead. If disabled, the attribute won't have any validator at all unless you manually specified one.
+- **PymodelioSetting.AUTO_PARSE_DATES_AS_UTC** (`bool`): If `True`, deserialized date and datetime timezones will be
+  replaced by `UTC`.
+- **PymodelioSetting.USE_DEFAULT_ATTR_VALIDATOR_IF_NOT_DEFINED** (`bool`): If a validator is not provided when defining
+  a model attribute (like `Attr(str)`) an automatically inferred validator will be used instead. If disabled, the
+  attribute won't have any validator at all unless you manually specified one.
 
 Updating a setting it's as simple as doing:
 
 ```py
-PymodelioSettings.set(PymodelioSetting.<setting_name>, <value>)
+PymodelioSettings.set(PymodelioSetting. < setting_name >, < value >)
 ```
 
 For getting the value of a setting, you can call:
 
 ```py
-PymodelioSettings.get(PymodelioSetting.<setting_name>)
+PymodelioSettings.get(PymodelioSetting. < setting_name >)
 ```
 
 Settings can also be resseted by calling:
@@ -1084,7 +1147,8 @@ class PymodelioChildModel(PymodelioModel):
 
 class PymodelioParentModel(PymodelioModel):
     public_attr: Attr(int, validator=IntValidator(min_value=0, max_value=10))
-    _protected_attr: Attr(str, validator=StringValidator(fixed_len=5, regex='^[A-Z]+$'), init_alias='protected_attr')  # Only capitalized chars
+    _protected_attr: Attr(str, validator=StringValidator(fixed_len=5, regex='^[A-Z]+$'),
+                          init_alias='protected_attr')  # Only capitalized chars
     __private_attr: Attr(datetime, init_alias='private_attr')
     child_model_attr: Attr(PymodelioChildModel)
     children_model_attr: Attr(List[PymodelioChildModel])
@@ -1095,13 +1159,16 @@ class PymodelioParentModel(PymodelioModel):
 
 ### What about comparing attrs, pydantic and pymodelio?
 
-On early releases of this module, most of people wanted like to know why choosing pymodelio over attrs or pydantic. Apart of some unique use cases that pymodelio simplifies a lot (as we described in this documentation), we created a benchmark (that you can run) for comparing these libraries.
+On early releases of this module, most of people wanted like to know why choosing pymodelio over attrs or pydantic.
+Apart of some unique use cases that pymodelio simplifies a lot (as we described in this documentation), we created a
+benchmark (that you can run) for comparing these libraries.
 
 For running this benchmark, `attrs`, `pydantic` and `pymodelio` must be installed in your working environment.
 
 In this benchmark, we are comparing:
 
-- The time each library takes for deserializing a model from a dictionary (including the validation run during initialization)
+- The time each library takes for deserializing a model from a dictionary (including the validation run during
+  initialization)
 - The time each library takes for serializing a model into a dictionary
 - The time each library takes for reading and writting model attributes
 - The time each library takes for deserializing a model from invalid data (that results in validation errors)
@@ -1194,12 +1261,12 @@ class TimeResults:
     total: float = 0.0
 
     def __repr__(self) -> str:
-        return f'Total {self.total} seconds:\n' \
-               f'  > Valid data processing (total {self.valid_data_processing} seconds)\n' \
-               f'     - Deserialization {self.deserialization} seconds\n' \
-               f'     - Serialization {self.serialization} seconds\n' \
-               f'  > Attributes updating (total {self.valid_data_processing} seconds)\n' \
-               f'  > Invalid data processing (total {self.invalid_data_processing} seconds)\n'
+        return f'Total {self.total} seconds:\n'
+        f'  > Valid data processing (total {self.valid_data_processing} seconds)\n'
+        f'     - Deserialization {self.deserialization} seconds\n'
+        f'     - Serialization {self.serialization} seconds\n'
+        f'  > Attributes updating (total {self.valid_data_processing} seconds)\n'
+        f'  > Invalid data processing (total {self.invalid_data_processing} seconds)\n'
 
 
 def generate_valid_data() -> List[dict]:
@@ -1325,9 +1392,11 @@ if __name__ == '__main__':
     main()
 ```
 
-You can update the variables `NUM_PARENTS` and `NUM_CHILDREN_PER_PARENT` for adjusting the amount of data you want to run the benchmark for (be careful about increasing the numbers too much because this will cause an exponential growth).
+You can update the variables `NUM_PARENTS` and `NUM_CHILDREN_PER_PARENT` for adjusting the amount of data you want to
+run the benchmark for (be careful about increasing the numbers too much because this will cause an exponential growth).
 
-The results of this benchmark executed in a _Manjaro Linux_ with an _AMD Ryzen 7 PRO 4750U_ proccessor and _16GB_ of ram, using _Python 3.10_ were:
+The results of this benchmark executed in a _Manjaro Linux_ with an _AMD Ryzen 7 PRO 4750U_ proccessor and _16GB_ of
+ram, using _Python 3.10_ were:
 
 ```
 Creating sample data
@@ -1365,30 +1434,42 @@ Total 1.9439215660095215 seconds:
   > Invalid data processing (total 0.5468699932098389 seconds)
 ```
 
-First of all, it's important to know that in this benchmark, we implemented a case of use that can be easily implemented by using any of the three compared libraries. But there are some cases (as we described earlier in this doc) that can not be easily implemented with _attrs_ or _pydantic_.
+First of all, it's important to know that in this benchmark, we implemented a case of use that can be easily implemented
+by using any of the three compared libraries. But there are some cases (as we described earlier in this doc) that can
+not be easily implemented with _attrs_ or _pydantic_.
 
 So now we can continue...
 
 #### attrs
 
-As we can see, _attrs_ is the most performing library of the three, but at what cost? Well, for the _attrs_ models we had to manually specify the validators and also implement one for `children`. Apart from this, we had to implement the converter for the deserialization process of `children`.
+As we can see, _attrs_ is the most performing library of the three, but at what cost? Well, for the _attrs_ models we
+had to manually specify the validators and also implement one for `children`. Apart from this, we had to implement the
+converter for the deserialization process of `children`.
 
 #### pydantic
 
-_pydantic_ performed a bit better than pymodelio in terms of deserialization, but when we analyze the total time or the other evaluated topics, there was a big difference with the other two.
+_pydantic_ performed a bit better than pymodelio in terms of deserialization, but when we analyze the total time or the
+other evaluated topics, there was a big difference with the other two.
 
-It's important to mention that pydantic perform validations each time an attribute is updated. Pymodelio doesn't share that philosophy, instead, you can trigger the validations whenever you want by calling the `validate()` method of any pymodelio's model.
+It's important to mention that pydantic perform validations each time an attribute is updated. Pymodelio doesn't share
+that philosophy, instead, you can trigger the validations whenever you want by calling the `validate()` method of any
+pymodelio's model.
 
 #### pymodelio
 
 As we can see _pymodelio_ got a punctuation in the middle between _attrs_ and _pydantic_.
 
-In terms of deserialization, _pymodelio_ performed a bit worse than _pydantic_, but outperformed it in all other topics. Regarding serialization, pymodelio was the best of the three.
+In terms of deserialization, _pymodelio_ performed a bit worse than _pydantic_, but outperformed it in all other topics.
+Regarding serialization, pymodelio was the best of the three.
 
 #### Conslusions
 
-This benchmark was implemented for doing mainly performance comparisons. But don't forget that performance is not always the most important topic to consider when choosing a library like these ones.
+This benchmark was implemented for doing mainly performance comparisons. But don't forget that performance is not always
+the most important topic to consider when choosing a library like these ones.
 
-When you have a large project to maintain with multiple people working on the same codebase, usability is often an excellent point to choose one option over the others.
+When you have a large project to maintain with multiple people working on the same codebase, usability is often an
+excellent point to choose one option over the others.
 
-So not only consider the numbers here, _attrs_ and _pydantic_ are great libraries that have been there for a long time. One does things that the other doesn't. We hope some day _pymodelio_ will also be another popular option, not to replace the others, but to complement them when they don't suit your needs or your coding style.
+So not only consider the numbers here, _attrs_ and _pydantic_ are great libraries that have been there for a long time.
+One does things that the other doesn't. We hope some day _pymodelio_ will also be another popular option, not to replace
+the others, but to complement them when they don't suit your needs or your coding style.

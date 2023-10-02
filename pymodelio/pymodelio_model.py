@@ -1,8 +1,8 @@
 from datetime import datetime, date
-from typing import List, Any, Tuple, TypeVar, Callable, Dict, Type, Optional
+from typing import List, Any, Tuple, TypeVar, Callable, Dict, Type, Optional, Set
 
 from pymodelio.attribute import PymodelioAttr
-from pymodelio.constants import UNDEFINED
+from pymodelio.constants import UNDEFINED, PYMODELIO_MODEL_ORIGIN
 from pymodelio.model_deserializer import ModelDeserializer
 from pymodelio.model_serializer import ModelSerializer
 from pymodelio.pymodelio_meta import PymodelioMeta
@@ -16,14 +16,15 @@ class PymodelioModel(metaclass=PymodelioMeta):
     __is_pymodelio_inner_model__ = False
     __model_attrs__: Tuple[str, PymodelioAttr] = tuple()
     __pymodelio_parent__ = None
-    __serializable_attrs__ = []
-    __exposed_attrs__ = {}
-    __protected_attrs__ = set()
-    __private_attrs__ = set()
+    __serializable_attrs__: List[str] = []
+    __exposed_attrs__: Dict[str, Tuple[str]] = {}
+    __protected_attrs__: Set[str] = set()
+    __private_attrs__: Set[str] = set()
     __deserializers__: Dict[str, Callable] = dict()
+    __origin__ = PYMODELIO_MODEL_ORIGIN
 
-    def __init__(self, *args, auto_validate: bool = True, **kwargs) -> None:
-        args, kwargs = self.__before_init__(*args, auto_validate=auto_validate, **kwargs)
+    def __init__(self, /, *, auto_validate: bool = True, **kwargs) -> None:
+        kwargs = self.__before_init__(auto_validate=auto_validate, **kwargs)
         self.__set_attributes(kwargs)
         self.__before_validate__()
         if auto_validate:
@@ -45,8 +46,8 @@ class PymodelioModel(metaclass=PymodelioMeta):
                 attr_value = model_attr.default_factory()
             setattr(self, attr_name, attr_value)
 
-    def __before_init__(self, *args, **kwargs) -> Tuple[Tuple[Any], Dict[Any, Any]]:
-        return args, kwargs
+    def __before_init__(self, **kwargs) -> Dict[str, Any]:
+        return kwargs
 
     def __before_validate__(self) -> None:
         return

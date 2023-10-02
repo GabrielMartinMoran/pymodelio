@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, Set
+from typing import List, Optional, Tuple, Set, Dict
 
 from pymodelio import shared_vars
 from pymodelio.attribute import PymodelioAttr
@@ -80,7 +80,7 @@ def _get_exposed_attr_name(pmcls: type, attr_name: str, attr: PymodelioAttr) -> 
     return (attr_name,)
 
 
-def _generate_exposed_attrs_map(cls: type, attrs: dict) -> dict:
+def _generate_exposed_attrs_map(cls: type, attrs: dict) -> Dict[str, Tuple[str]]:
     exposed_attrs = {}
     for attr_name in attrs:
         attr = attrs[attr_name]
