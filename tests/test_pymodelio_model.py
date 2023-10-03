@@ -3,10 +3,11 @@ from typing import Any, Optional, List, Set, Tuple, Dict, Union
 
 import pytest
 
-from pymodelio import PymodelioModel, PymodelioSettings, PymodelioSetting
+from pymodelio import PymodelioModel
 from pymodelio.attribute import Attr, PymodelioAttr
 from pymodelio.constants import UNDEFINED
 from pymodelio.decorators.deserializes import deserializes
+from pymodelio.decorators.serializes import serializes
 from pymodelio.exceptions.model_validation_exception import ModelValidationException
 from tests.test_models.computer import Computer
 
@@ -482,3 +483,66 @@ def test_model_inner_model_class_is_created_correctly_when_parent_model_was_alre
     assert isinstance(child_instance, TestCaseChildModel)
     assert child_instance._attr_1 == 123
     assert child_instance._attr_2 == 456
+
+
+def test_patch_completes_instance():
+    class InnerModel(PymodelioModel):
+        a: Attr(Optional[str])
+        b: Attr(Optional[int])
+
+    class ModelToPatch(PymodelioModel):
+        a: Attr(Optional[int])
+        b: Attr(Optional[float])
+        c: Attr(Optional[str])
+        d: Attr(Optional[List[int]])
+        e: Attr(Optional[InnerModel])
+
+    class ReferenceModel(PymodelioModel):
+        a: Attr(int)
+        b: Attr(float)
+        c: Attr(str)
+        d: Attr(List[int])
+        e: Attr(InnerModel)
+
+    ref_obj = {'a': 6, 'b': 7.2, 'c': 'other_str_value', 'd': [9, 8, 7]}
+    model_to_patch = ModelToPatch(a=5, c='str_value')
+    model_to_patch.patch(ref_obj, on_value=None)
+    assert model_to_patch.a != ref_obj['a']
+    assert model_to_patch.b == ref_obj['b']
+    assert model_to_patch.c != ref_obj['c']
+    assert model_to_patch.d == ref_obj['d']
+    assert model_to_patch.e is None
+
+    ref_obj = ReferenceModel(a=1, b=2.5, c='ref_model_str_value', d=[5, 4, 3, 2, 1], e=InnerModel(a='inner_str', b=2))
+    model_to_patch = ModelToPatch(c='str_value', d=[1, 2, 3, 4])
+    model_to_patch.patch(ref_obj, on_value=None)
+    assert model_to_patch.a == ref_obj.a
+    assert model_to_patch.b == ref_obj.b
+    assert model_to_patch.c != ref_obj.c
+    assert model_to_patch.d != ref_obj.d
+    assert model_to_patch.e == ref_obj.e
+
+    ref_obj = ReferenceModel(a=1, b=2.5, c='ref_model_str_value', d=[5, 4, 3, 2, 1], e=InnerModel(a='inner_str', b=2))
+    model_to_patch = ModelToPatch(c='str_value', d=[1, 2, 3, 4], e=InnerModel())
+    model_to_patch.patch(ref_obj, on_value=None)
+    assert model_to_patch.a == ref_obj.a
+    assert model_to_patch.b == ref_obj.b
+    assert model_to_patch.c != ref_obj.c
+    assert model_to_patch.d != ref_obj.d
+    assert model_to_patch.e.a == ref_obj.e.a
+    assert model_to_patch.e.b == ref_obj.e.b
+
+
+def test_serializes_decorator_serializes_specific_attr():
+    class TestCaseModel(PymodelioModel):
+        attr: Attr(str)
+
+        @serializes('attr')
+        def serializes_attr(self) -> str:
+            return self.attr.upper()
+
+    instance = TestCaseModel(attr='attr_value')
+    assert instance.attr == 'attr_value'
+
+    serialized = instance.to_dict()
+    assert serialized['attr'] == 'ATTR_VALUE'

@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from typing import List, Any, Tuple, TypeVar, Callable, Dict, Type, Optional, Set
+from typing import List, Any, Tuple, TypeVar, Callable, Dict, Type, Optional, Set, Union
 
 from pymodelio.attribute import PymodelioAttr
 from pymodelio.constants import UNDEFINED, PYMODELIO_MODEL_ORIGIN
@@ -21,6 +21,7 @@ class PymodelioModel(metaclass=PymodelioMeta):
     __protected_attrs__: Set[str] = set()
     __private_attrs__: Set[str] = set()
     __deserializers__: Dict[str, Callable] = dict()
+    __serializers__: Dict[str, Callable] = dict()
     __origin__ = PYMODELIO_MODEL_ORIGIN
 
     def __init__(self, /, *, auto_validate: bool = True, **kwargs) -> None:
@@ -133,3 +134,24 @@ class PymodelioModel(metaclass=PymodelioMeta):
     @classmethod
     def _set_inner_model(cls, inner_model: type) -> None:
         setattr(cls, '_%s__inner_pymodelio_model' % cls.__name__, inner_model)
+
+    def patch(self, from_: Union[object, dict], on_value: Optional[Any] = None) -> None:
+        """
+        This method completes the `self` object and the attributes of its inner models  which values match the value
+        passed on `on_value` parameter.
+        It's recommended to call `validate()` after this method to ensure the attributes are valid.
+        :param from_: Object to get the attributes from
+        :param on_value: Value to replace on the left
+        """
+        is_dict = isinstance(from_, dict)
+        for attr_name, pm_attr in self.__model_attrs__:
+            current_value = getattr(self, attr_name)
+            if is_dict:
+                reference_value = from_.get(attr_name, on_value)
+            else:
+                reference_value = getattr(from_, attr_name, on_value)
+            if current_value == on_value:
+                if reference_value != on_value:
+                    setattr(self, attr_name, reference_value)
+            elif isinstance(current_value, PymodelioModel):
+                current_value.patch(reference_value, on_value=on_value)

@@ -20,5 +20,8 @@ class ModelSerializer:
     def _serialize_model(cls, model: Any) -> dict:
         serialized = {}
         for attr_name, attr_value in model._get_serializable_attrs():
-            serialized[attr_name] = cls.serialize(attr_value)
+            if attr_name in model.__serializers__:
+                serialized[attr_name] = model.__serializers__[attr_name](model)
+            else:
+                serialized[attr_name] = cls.serialize(attr_value)
         return serialized

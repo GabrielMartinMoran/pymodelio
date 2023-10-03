@@ -101,6 +101,15 @@ def _get_custom_deserializers(pmcls: type, cls_dir: List[str]) -> dict:
     return deserializers
 
 
+def _get_custom_serializers(pmcls: type, cls_dir: List[str]) -> dict:
+    serializers = {}
+    for attr_name in cls_dir:
+        serializer_function = getattr(pmcls, attr_name)
+        if hasattr(serializer_function, '__serializes__'):
+            serializers[serializer_function.__serializes__] = serializer_function
+    return serializers
+
+
 class PymodelioMeta(type):
     IS_INNER_MODEL_KEY = '__is_pymodelio_inner_model__'
 
@@ -128,7 +137,8 @@ class PymodelioMeta(type):
             '__exposed_attrs__': _generate_exposed_attrs_map(pmcls, model_attrs),
             '__protected_attrs__': protected_attrs,
             '__private_attrs__': private_attrs,
-            '__deserializers__': _get_custom_deserializers(pmcls, cls_dir)
+            '__deserializers__': _get_custom_deserializers(pmcls, cls_dir),
+            '__serializers__': _get_custom_serializers(pmcls, cls_dir)
         }
 
         inner_class = type(pmcls.__name__, (pmcls,) + pmcls.__bases__, inner_dict)

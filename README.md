@@ -1473,3 +1473,8 @@ excellent point to choose one option over the others.
 So not only consider the numbers here, _attrs_ and _pydantic_ are great libraries that have been there for a long time.
 One does things that the other doesn't. We hope some day _pymodelio_ will also be another popular option, not to replace
 the others, but to complement them when they don't suit your needs or your coding style.
+
+
+# TODO
+- Detallar metodo _patch_
+- Detallar decorator _@serializes_

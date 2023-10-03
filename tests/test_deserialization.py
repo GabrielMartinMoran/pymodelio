@@ -112,4 +112,5 @@ def test_from_dict_deserialize_tuple_with_different_types():
         attr: Attr(Tuple[int, float, str, InnerModel], validator=None)
 
     instance = TestCaseModel.from_dict({'attr': [1, 2.5, 'STR', {'foo': 'bar'}]})
+
     assert instance.attr == (1, 2.5, 'STR', InnerModel(foo='bar'))
