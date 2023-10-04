@@ -1,3 +1,4 @@
 # flake8: noqa
 from .model_validation_exception import ModelValidationException
 from .auto_validator_creation_exception import AutoValidatorCreationException
+from .non_initable_attribute_exception import NonInitableAttributeException

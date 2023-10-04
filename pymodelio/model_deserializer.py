@@ -12,7 +12,6 @@ T = TypeVar('T')
 
 class ModelDeserializer:
     __GENERIC_ALIASES = {'_GenericAlias', '_UnionGenericAlias'}
-    __ITERABLE_ORIGINS = {list, tuple, set}
 
     @classmethod
     def deserialize(cls, pmcls: Type[T], data: dict, auto_validate: bool) -> T:

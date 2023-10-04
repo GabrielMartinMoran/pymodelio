@@ -3,6 +3,7 @@ from typing import List, Any, Tuple, TypeVar, Callable, Dict, Type, Optional, Se
 
 from pymodelio.attribute import PymodelioAttr
 from pymodelio.constants import UNDEFINED, PYMODELIO_MODEL_ORIGIN
+from pymodelio.exceptions.non_initable_attribute_exception import NonInitableAttributeException
 from pymodelio.model_deserializer import ModelDeserializer
 from pymodelio.model_serializer import ModelSerializer
 from pymodelio.pymodelio_meta import PymodelioMeta
@@ -14,7 +15,7 @@ class PymodelioModel(metaclass=PymodelioMeta):
     # Only for intellisense
     __is_pymodelio_model__ = True
     __is_pymodelio_inner_model__ = False
-    __model_attrs__: Tuple[str, PymodelioAttr] = tuple()
+    __model_attrs__: List[Tuple[str, PymodelioAttr]] = tuple()
     __pymodelio_parent__ = None
     __serializable_attrs__: List[str] = []
     __exposed_attrs__: Dict[str, Tuple[str]] = {}
@@ -34,12 +35,12 @@ class PymodelioModel(metaclass=PymodelioMeta):
 
     def __set_attributes(self, kwargs: dict) -> None:
         for attr_name, model_attr in self.__model_attrs__:
-            exposed_attr_names = self.__get_exposed_attr_names(attr_name)
+            exposed_attr_names = self.__exposed_attrs__.get(attr_name)
             attr_value = UNDEFINED
             for exposed_attr_name in exposed_attr_names:
                 if exposed_attr_name in kwargs:
                     if not model_attr.initable:
-                        raise NameError(
+                        raise NonInitableAttributeException(
                             '%s attribute is not initable for class %s' % (attr_name, self.__class__.__name__))
                     attr_value = kwargs[exposed_attr_name]
                     break
@@ -55,14 +56,6 @@ class PymodelioModel(metaclass=PymodelioMeta):
 
     def __once_validated__(self) -> None:
         return
-
-    def __get_exposed_attr_names(self, attr_name: str) -> Tuple[str]:
-        return self.__exposed_attrs__.get(attr_name)
-
-    def __is_initable(self, attr_name: str, model_attr: PymodelioAttr) -> bool:
-        return model_attr.initable and \
-            attr_name not in self.__protected_attrs__ and \
-            attr_name in self.__private_attrs__
 
     def validate(self, path: str = None) -> None:
         """

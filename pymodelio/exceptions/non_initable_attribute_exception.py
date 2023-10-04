@@ -1,0 +1,2 @@
+class NonInitableAttributeException(Exception):
+    pass

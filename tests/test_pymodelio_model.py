@@ -9,6 +9,7 @@ from pymodelio.constants import UNDEFINED
 from pymodelio.decorators.deserializes import deserializes
 from pymodelio.decorators.serializes import serializes
 from pymodelio.exceptions.model_validation_exception import ModelValidationException
+from pymodelio.exceptions.non_initable_attribute_exception import NonInitableAttributeException
 from tests.test_models.computer import Computer
 
 
@@ -108,7 +109,7 @@ def test_can_not_init_non_initable_model_attributes():
     class Model(PymodelioModel):
         non_initable_model_attr: Attr(str, initable=False, default_factory=lambda: 'default value')
 
-    with pytest.raises(NameError) as ex_info:
+    with pytest.raises(NonInitableAttributeException) as ex_info:
         Model(non_initable_model_attr='custom value')
     assert ex_info.value.args[0] == 'non_initable_model_attr attribute is not initable for class Model'
 
