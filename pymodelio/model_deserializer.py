@@ -11,7 +11,7 @@ T = TypeVar('T')
 
 
 class ModelDeserializer:
-    __GENERIC_ALIASES = {'_GenericAlias', '_UnionGenericAlias'}
+    __GENERIC_ALIASES = ('_GenericAlias', '_UnionGenericAlias')
 
     @classmethod
     def deserialize(cls, pmcls: Type[T], data: dict, auto_validate: bool) -> T:
@@ -21,26 +21,31 @@ class ModelDeserializer:
             inner_cls = pmcls._get_inner_model()
         attrs = {}
         for attr_name, model_attr in inner_cls.__model_attrs__:
-            if model_attr.initable:
-                exposed_attr_names = inner_cls.__exposed_attrs__.get(attr_name)
-                attr_value = UNDEFINED
-                exposed_attr_name_to_use = exposed_attr_names[0]
-                for exposed_attr_name in exposed_attr_names:
-                    if exposed_attr_name in inner_cls.__deserializers__:
-                        if exposed_attr_name in data:
-                            exposed_attr_name_to_use = exposed_attr_name
-                            attr_value = inner_cls.__deserializers__[exposed_attr_name](
-                                data[exposed_attr_name])
-                            break
-                    else:
-                        if exposed_attr_name in data:
-                            exposed_attr_name_to_use = exposed_attr_name
-                            attr_value = cls.__map_attribute(data, exposed_attr_name, model_attr)
-                            break
-                if attr_value == UNDEFINED:
-                    attrs[exposed_attr_name_to_use] = model_attr.default_factory()
+            if not model_attr.initable:
+                continue
+            exposed_attr_names = inner_cls.__exposed_attrs__[attr_name]
+            attr_value = UNDEFINED
+            exposed_attr_name_to_use = exposed_attr_names[0]
+            for exposed_attr_name in exposed_attr_names:
+                if exposed_attr_name not in data:
+                    continue
+                if exposed_attr_name in inner_cls.__deserializers__:
+                    exposed_attr_name_to_use = exposed_attr_name
+                    attr_value = inner_cls.__deserializers__[exposed_attr_name](data[exposed_attr_name])
+                    break
                 else:
-                    attrs[exposed_attr_name_to_use] = attr_value
+                    exposed_attr_name_to_use = exposed_attr_name
+                    attr_value = cls.__map_attribute(data, exposed_attr_name, model_attr)
+                    break
+            if attr_value != UNDEFINED:
+                attrs[exposed_attr_name_to_use] = attr_value
+                continue
+            if model_attr.default_factory is not None:
+                attrs[exposed_attr_name_to_use] = model_attr.default_factory()
+                continue
+            else:
+                attrs[exposed_attr_name_to_use] = None
+
         return inner_cls(**attrs, auto_validate=auto_validate)
 
     @classmethod
@@ -74,14 +79,14 @@ class ModelDeserializer:
             list_type = expected_type.__args__[0]
         if list_type is None:
             return attr_value
+        # If the type is not a model
+        if not getattr(list_type, '__is_pymodelio_model__', False):
+            return attr_value
         # If the type is more than one. For instance -> a: List[Union[int, float]]
         if list_type.__class__.__name__ in cls.__GENERIC_ALIASES:
             print('WARNING: pymodelio automatic deserialization does not handle multi typed lists of models')
             return attr_value
-        # If the type is not a model
-        if not getattr(list_type, '__is_pymodelio_model__', False):
-            return attr_value
-            # At this point, the list is a list of models
+        # At this point, the list is a list of models
         return [list_type.from_dict(x, auto_validate=False) for x in attr_value]
 
     @classmethod
@@ -89,7 +94,7 @@ class ModelDeserializer:
         if len(attr_value) == 0 or len(attr_value) != len(getattr(expected_type, '__args__', [])):
             # The length of the tuple must match the length of the type
             return tuple(attr_value)
-        deserialized = []
-        for i_value, i_type in zip(attr_value, expected_type.__args__):
-            deserialized.append(cls.__deserialize_value(i_value, i_type, getattr(i_type, '__origin__', i_type)))
-        return tuple(deserialized)
+        return tuple(
+            cls.__deserialize_value(i_value, i_type, getattr(i_type, '__origin__', i_type)) for i_value, i_type in
+            zip(attr_value, expected_type.__args__)
+        )

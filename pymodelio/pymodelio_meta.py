@@ -23,11 +23,10 @@ def _get_model_attrs(cls: type) -> dict:
 
 
 def _get_serializable_attr_names(cls: type, attr_names: Set[str]) -> List[str]:
-    serializable_attr_names = []
-    for attr_name in attr_names:
-        if not attr_name.startswith('_') and not _is_marked_as_do_not_serialize(cls, attr_name):
-            serializable_attr_names.append(attr_name)
-    return serializable_attr_names
+    return [
+        attr_name for attr_name in attr_names if
+        attr_name[0] != '_' and not _is_marked_as_do_not_serialize(cls, attr_name)
+    ]
 
 
 def _is_marked_as_do_not_serialize(cls: type, attr_name: str) -> bool:
@@ -43,10 +42,7 @@ def _generate_private_attr_prefix(cls_type: type) -> str:
 
 def _get_parent_private_attr_prefixes(cls: type) -> List[str]:
     # Iterate all the parents
-    prefixes = []
-    for cls in cls.__bases__:
-        prefixes.append(_generate_private_attr_prefix(cls))
-    return prefixes
+    return [_generate_private_attr_prefix(cls) for cls in cls.__bases__]
 
 
 def _get_private_attr_prefixes(pmcls: type) -> List[str]:
@@ -92,13 +88,12 @@ def _generate_exposed_attrs_map(cls: type, attrs: dict) -> Dict[str, Tuple[str]]
 
 
 def _get_custom_deserializers(pmcls: type, cls_dir: List[str]) -> dict:
-    deserializers = {}
-    for attr_name in cls_dir:
-        deserializer_function = getattr(pmcls, attr_name)
-        if hasattr(deserializer_function, '__deserializes__'):
-            for exposed_attr_name in deserializer_function.__deserializes__:
-                deserializers[exposed_attr_name] = deserializer_function
-    return deserializers
+    return {
+        exposed_attr_name: deserializer_function
+        for attr_name in cls_dir
+        if hasattr((deserializer_function := getattr(pmcls, attr_name)), '__deserializes__')
+        for exposed_attr_name in deserializer_function.__deserializes__
+    }
 
 
 def _get_custom_serializers(pmcls: type, cls_dir: List[str]) -> dict:
@@ -132,7 +127,7 @@ class PymodelioMeta(type):
             '__slots__': attr_names,
             PymodelioMeta.IS_INNER_MODEL_KEY: True,
             '__pymodelio_parent__': pmcls,
-            '__model_attrs__': [(k, model_attrs[k]) for k in model_attrs],
+            '__model_attrs__': tuple((k, model_attrs[k]) for k in model_attrs),
             '__serializable_attrs__': _get_serializable_attr_names(pmcls, set(cls_dir + list(attr_names))),
             '__exposed_attrs__': _generate_exposed_attrs_map(pmcls, model_attrs),
             '__protected_attrs__': protected_attrs,

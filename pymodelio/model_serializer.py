@@ -6,7 +6,7 @@ class ModelSerializer:
 
     @classmethod
     def serialize(cls, value: Any) -> Any:
-        if getattr(value, '__is_pymodelio_model__', False):
+        if hasattr(value, '__is_pymodelio_model__'):
             return cls._serialize_model(value)
         if isinstance(value, (list, tuple, set)):
             return list(map(cls.serialize, value))

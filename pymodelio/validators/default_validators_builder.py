@@ -32,6 +32,8 @@ class DefaultValidatorsBuilder:
         typing.Any: Validator
     }
 
+    _TYPEOF_NONE = type(None)
+
     @classmethod
     def build(cls, attr_type: type) -> Optional[Validator]:
         destructured = cls._destructurate(attr_type)
@@ -67,7 +69,7 @@ class DefaultValidatorsBuilder:
                     is_nullable = False
                     inners = []
                     for x in args:
-                        if x == type(None):  # noqa: E721
+                        if x == cls._TYPEOF_NONE:  # noqa: E721
                             is_nullable = True
                         else:
                             inners.append(cls._destructurate(x))

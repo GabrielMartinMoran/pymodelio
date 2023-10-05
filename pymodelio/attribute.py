@@ -8,10 +8,6 @@ from pymodelio.validators.validator import Validator
 T = TypeVar('T')
 
 
-def _default_factory_default_fn() -> None:
-    return None
-
-
 class PymodelioAttr:
     __slots__ = (
         'attr_type', 'attr_type_origin', 'initable', 'default_factory', 'init_aliases', 'validator', 'compare',
@@ -20,12 +16,12 @@ class PymodelioAttr:
 
     def __init__(self, attr_type: T, validator: Optional[Validator] = UNDEFINED, initable: bool = True,
                  init_alias: Optional[str] = None, init_aliases: Optional[Iterable[str]] = None,
-                 default_factory: Callable = None, compare: bool = True) -> None:
+                 default_factory: Optional[Callable] = None, compare: bool = True) -> None:
         self.attr_type = attr_type
         self.attr_type_origin = getattr(attr_type, '__origin__', attr_type)
         self._init_attr_aliases(init_alias, init_aliases)
         self.initable = initable or len(self.init_aliases) > 0
-        self.default_factory = default_factory if default_factory is not None else _default_factory_default_fn
+        self.default_factory = default_factory
         self._init_validator(validator)
         self.compare = compare
         self._initialized = True
@@ -58,7 +54,7 @@ class PymodelioAttr:
 
 
 def Attr(attr_type: T, /, *, validator: Optional[Validator] = UNDEFINED, initable: bool = True,
-         init_alias: Optional[str] = None, init_aliases: Iterable[str] = None, default_factory: Callable = None,
-         compare: bool = True) -> T:
+         init_alias: Optional[str] = None, init_aliases: Iterable[str] = None,
+         default_factory: Optional[Callable] = None, compare: bool = True) -> T:
     return PymodelioAttr(attr_type=attr_type, validator=validator, initable=initable, init_alias=init_alias,
                          init_aliases=init_aliases, default_factory=default_factory, compare=compare)

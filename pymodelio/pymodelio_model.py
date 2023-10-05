@@ -15,7 +15,7 @@ class PymodelioModel(metaclass=PymodelioMeta):
     # Only for intellisense
     __is_pymodelio_model__ = True
     __is_pymodelio_inner_model__ = False
-    __model_attrs__: List[Tuple[str, PymodelioAttr]] = tuple()
+    __model_attrs__: Tuple[Tuple[str, PymodelioAttr]] = tuple()
     __pymodelio_parent__ = None
     __serializable_attrs__: List[str] = []
     __exposed_attrs__: Dict[str, Tuple[str]] = {}
@@ -45,7 +45,10 @@ class PymodelioModel(metaclass=PymodelioMeta):
                     attr_value = kwargs[exposed_attr_name]
                     break
             if attr_value == UNDEFINED:
-                attr_value = model_attr.default_factory()
+                if model_attr.default_factory is not None:
+                    attr_value = model_attr.default_factory()
+                else:
+                    attr_value = None
             setattr(self, attr_name, attr_value)
 
     def __before_init__(self, **kwargs) -> Dict[str, Any]:
@@ -61,14 +64,12 @@ class PymodelioModel(metaclass=PymodelioMeta):
         """
         It must raise ModelValidationException in case of an invalid attribute
         """
-        [self.__validate_attr(model_attr[0], model_attr[1], path) for model_attr in self.__model_attrs__]
-
-    def __validate_attr(self, attr_name: str, model_attr: PymodelioAttr, path: str) -> None:
-        attr_value = getattr(self, attr_name)
         parent_path = path if path is not None else self.__class__.__name__
-        attr_path = '%s.%s' % (parent_path, attr_name)
-        model_attr.validate(attr_value, path=attr_path)
-        self.__when_validating_an_attr__(attr_name, attr_value, attr_path, parent_path, model_attr)
+        for attr_name, model_attr in self.__model_attrs__:
+            attr_value = getattr(self, attr_name)
+            attr_path = '%s.%s' % (parent_path, attr_name)
+            model_attr.validate(attr_value, path=attr_path)
+            self.__when_validating_an_attr__(attr_name, attr_value, attr_path, parent_path, model_attr)
 
     def __when_validating_an_attr__(self, attr_name: str, attr_value: Any, attr_path: str,
                                     parent_path: str, attr: PymodelioAttr) -> None:
@@ -82,13 +83,12 @@ class PymodelioModel(metaclass=PymodelioMeta):
         return ModelSerializer.serialize(self)
 
     def _get_serializable_attrs(self) -> List[Tuple[str, Any]]:
-        attrs = []
-        for attr_name in self.__serializable_attrs__:
-            attr_value = getattr(self, attr_name)
-            # If it is a function, we ignore it
-            if not callable(attr_value):
-                attrs.append((attr_name, attr_value))
-        return attrs
+        serializable_attrs = self.__serializable_attrs__
+        return [
+            (attr_name, attr_value)
+            for attr_name in serializable_attrs
+            if not callable((attr_value := getattr(self, attr_name, None)))
+        ]
 
     def __repr__(self) -> str:
         formatted_fields = []
